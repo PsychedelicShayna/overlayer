@@ -25,16 +25,12 @@ uint8_t MainWindow::getWindowAlpha(const HWND& window_handle) {
     return alpha;
 }
 
-bool MainWindow::hasTransparencyFlag(const HWND& window_handle)  {
-    return GetWindowLong(window_handle, GWL_EXSTYLE) & WS_EX_LAYERED;
+int32_t MainWindow::addTopmostFlag(const HWND& window_handle) {
+    return SetWindowPos(window_handle, HWND_TOPMOST, NULL, NULL, NULL, NULL, SWP_NOMOVE | SWP_NOSIZE);
 }
 
-int32_t MainWindow::addTransparencyFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) | WS_EX_LAYERED);
-}
-
-int32_t MainWindow::removeTransparencyFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+int32_t MainWindow::removeTopmostFlag(const HWND& window_handle) {
+    return SetWindowPos(window_handle, HWND_NOTOPMOST, NULL, NULL, NULL, NULL, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 bool MainWindow::hasClickthroughFlag(const HWND& window_handle) {
@@ -49,10 +45,38 @@ int32_t MainWindow::removeClickthroughFlag(const HWND& window_handle) {
     return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) & ~WS_EX_TRANSPARENT);
 }
 
+bool MainWindow::hasTransparencyFlag(const HWND& window_handle)  {
+    return GetWindowLong(window_handle, GWL_EXSTYLE) & WS_EX_LAYERED;
+}
+
+int32_t MainWindow::addTransparencyFlag(const HWND& window_handle) {
+    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) | WS_EX_LAYERED);
+}
+
+int32_t MainWindow::removeTransparencyFlag(const HWND& window_handle) {
+    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+}
+
 void MainWindow::setSelectedWindowAlphaToSliderValue() {
-    if(selectedWindowHandle != nullptr && IsWindow(selectedWindowHandle) && hasTransparencyFlag(selectedWindowHandle)) {
+    if(selectedWindowHandle != nullptr && IsWindow(selectedWindowHandle) && hasTransparencyFlag(selectedWindowHandle) && originalWindowStates.contains(selectedWindowHandle)) {
         setWindowAlpha(selectedWindowHandle, static_cast<uint8_t>(ui->spinBoxOpacityValue->value()));
     }
+}
+
+void MainWindow::addTopmostFlagToSelectedWindow() {
+    addTopmostFlag(selectedWindowHandle);
+}
+
+void MainWindow::removeTopmostFlagFromSelectedWindow() {
+    removeTopmostFlag(selectedWindowHandle);
+}
+
+void MainWindow::addClickthroughFlagToSelectedWindow() {
+    addClickthroughFlag(selectedWindowHandle);
+}
+
+void MainWindow::removeClickthroughFlagFromSelectedWindow() {
+    removeClickthroughFlag(selectedWindowHandle);
 }
 
 void MainWindow::addTransparencyFlagToSelectedWindow() {
@@ -63,25 +87,21 @@ void MainWindow::removeTransparencyFlagFromSelectedWindow() {
     removeTransparencyFlag(selectedWindowHandle);
 }
 
-void MainWindow::addClickthroughFlagToSelectedWindow() {
-    addClickthroughFlag(selectedWindowHandle);
-
-}
-
-void MainWindow::removeClickthroughFlagFromSelectedWindow() {
-    removeClickthroughFlag(selectedWindowHandle);
-}
-
 void MainWindow::setModificationControlsEnabled(bool enabled) {
-    ui->pushButtonRemoveTransparencyFlag->setEnabled(enabled);
-    ui->pushButtonAddTransparencyFlag->setEnabled(enabled);
+    ui->pushButtonAddTopmostFlag->setEnabled(enabled);
+    ui->pushButtonRemoveTopmostFlag->setEnabled(enabled);
+
     ui->pushButtonAddClickthroughFlag->setEnabled(enabled);
     ui->pushButtonRemoveClickthroughFlag->setEnabled(enabled);
+
+    ui->pushButtonRemoveTransparencyFlag->setEnabled(enabled);
+    ui->pushButtonAddTransparencyFlag->setEnabled(enabled);
+
     ui->horizontalSliderOpacity->setEnabled(enabled);
     ui->spinBoxOpacityValue->setEnabled(enabled);
 }
 
-void MainWindow::on_pushButtonEnableModifications_clicked() {
+void MainWindow::enableModificationsForSelectedWindow() {
     if(selectedWindowHandle != nullptr && IsWindow(selectedWindowHandle) && !originalWindowStates.contains(selectedWindowHandle)) {
         WindowState original_state;
         ZeroMemory(&original_state, sizeof(original_state));
@@ -110,7 +130,7 @@ void MainWindow::on_horizontalSliderOpacity_valueChanged(int new_value) {
     setSelectedWindowAlphaToSliderValue();
 }
 
-void MainWindow::on_pushButtonSelectWindow_clicked() {
+void MainWindow::spawnProcessScannerDialog() {
     if(processScannerDialog == nullptr) {
         processScannerDialog = new ProcessScannerDialog { this, ProcessScanner::SCAN_SCOPE::WINDOW_MODE };
         processScannerDialog->show();
@@ -155,6 +175,7 @@ void MainWindow::restoreOriginalWindowStates() {
 
         if(IsWindow(window_handle)) {
             SetWindowLong(window_handle, GWL_EXSTYLE, original_state.ExStyle);
+            removeTopmostFlag(window_handle);
 
             if(original_state.ExStyle & WS_EX_LAYERED) {
                 const LWA& lwa { original_state.LWAttributes };
@@ -162,10 +183,6 @@ void MainWindow::restoreOriginalWindowStates() {
             }
         }
     }
-}
-
-void MainWindow::on_pushButtonRestoreWindows_clicked() {
-    restoreOriginalWindowStates();
 }
 
 qsizetype MainWindow::LoadAndApplyStylesheet(const QString& style_sheet_file_path) {
@@ -179,7 +196,7 @@ qsizetype MainWindow::LoadAndApplyStylesheet(const QString& style_sheet_file_pat
             style_sheet_file_stream.close();
 
             if(style_sheet_data.size()) {
-                QFileInfo resource_file_info { QString {"%1/%2.rcc" }.arg(style_sheet_file_info.path(), style_sheet_file_info.completeBaseName()) };
+                QFileInfo resource_file_info { QString { "%1/%2.rcc" }.arg(style_sheet_file_info.path(), style_sheet_file_info.completeBaseName()) };
 
                 if(resource_file_info.exists() && resource_file_info.isFile()) {
                     QResource::registerResource(resource_file_info.absoluteFilePath());
@@ -221,20 +238,35 @@ MainWindow::MainWindow(QWidget* parent)
 
     setModificationControlsEnabled(false);
 
+    connect(ui->pushButtonSelectWindow,           SIGNAL(clicked()),
+            this,                                 SLOT(spawnProcessScannerDialog()));
+
+    connect(ui->pushButtonEnableModifications,    SIGNAL(clicked()),
+            this,                                 SLOT(enableModificationsForSelectedWindow()));
+
     connect(ui->pushButtonRestoreWindows,         SIGNAL(clicked()),
             this,                                 SLOT(restoreOriginalWindowStates()));
 
-    connect(ui->pushButtonAddTransparencyFlag,    SIGNAL(clicked()),
-            this,                                 SLOT(addTransparencyFlagToSelectedWindow()));
+    connect(ui->pushButtonAddTopmostFlag,         SIGNAL(clicked()),
+            this,                                 SLOT(addTopmostFlagToSelectedWindow()));
 
-    connect(ui->pushButtonRemoveTransparencyFlag, SIGNAL(clicked()),
-            this,                                 SLOT(removeTransparencyFlagFromSelectedWindow()));
+    connect(ui->pushButtonRemoveTopmostFlag,      SIGNAL(clicked()),
+            this,                                 SLOT(removeTopmostFlagFromSelectedWindow()));
 
     connect(ui->pushButtonAddClickthroughFlag,    SIGNAL(clicked()),
             this,                                 SLOT(addClickthroughFlagToSelectedWindow()));
 
     connect(ui->pushButtonRemoveClickthroughFlag, SIGNAL(clicked()),
             this,                                 SLOT(removeClickthroughFlagFromSelectedWindow()));
+
+    connect(ui->pushButtonAddTransparencyFlag,    SIGNAL(clicked()),
+            this,                                 SLOT(addTransparencyFlagToSelectedWindow()));
+
+    connect(ui->pushButtonAddTransparencyFlag,    SIGNAL(clicked()),
+            this,                                 SLOT(setSelectedWindowAlphaToSliderValue()));
+
+    connect(ui->pushButtonRemoveTransparencyFlag, SIGNAL(clicked()),
+            this,                                 SLOT(removeTransparencyFlagFromSelectedWindow()));
 }
 
 MainWindow::~MainWindow() {

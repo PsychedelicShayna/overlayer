@@ -14,11 +14,11 @@ QTreeWidgetItem* ProcessScanner::ProcessInfo::WindowInfo::MakeChildItem() {
 
 ProcessScanner::ProcessInfo::WindowInfo::WindowInfo(const QString& title, const QString& hash, const bool& is_visible, const HWND& window_handle)
     :
-      WindowTitle       { title                                },
-      WindowHash        { hash                                 },
-      WindowVisibility  { is_visible ? "Visible" : "Invisible" },
-      IsWindowVisible   { is_visible                           },
-      WindowHandle      { window_handle                        }
+      WindowTitle         { title                                },
+      WindowHash          { hash                                 },
+      WindowVisibility    { is_visible ? "Visible" : "Invisible" },
+      IsWindowVisible     { is_visible                           },
+      WindowHandle        { window_handle                        }
 {
 
 }
@@ -47,15 +47,15 @@ QTreeWidgetItem* ProcessScanner::ProcessInfo::MakeRootItem() {
 
 ProcessScanner::ProcessInfo::ProcessInfo(const QString& process_image_name, const QString& process_id)
     :
-      ProcessImageName(process_image_name),
-      ProcessId(process_id)
+      ProcessImageName    { process_image_name },
+      ProcessId           { process_id         }
 {
 
 }
 
 QString ProcessScanner::getHwndHash(HWND hwnd) {
     uint8_t* hwnd_bytes { reinterpret_cast<uint8_t*>(&hwnd) };
-    int32_t hwnd_size = { sizeof(hwnd) };
+    int32_t  hwnd_size  { sizeof(hwnd)                      };
 
     uint8_t digest_buffer[4];
     ZeroMemory(digest_buffer, sizeof(digest_buffer));
@@ -65,7 +65,7 @@ QString ProcessScanner::getHwndHash(HWND hwnd) {
     }
 
     for(int32_t i { 0 }; i < static_cast<int32_t>(hwnd_size); ++i) {
-        uint16_t& digest_short =  reinterpret_cast<uint16_t*>(digest_buffer)[(i % 2 == 0) ? 0 : 1];
+        uint16_t& digest_short = reinterpret_cast<uint16_t*>(digest_buffer)[(i % 2 == 0) ? 0 : 1];
         const uint8_t& hwnd_byte { hwnd_bytes[i] };
 
         digest_short ^= static_cast<uint16_t>(hwnd_byte) << 8;

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>420</width>
-    <height>177</height>
+    <width>386</width>
+    <height>210</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -100,6 +100,36 @@
         </property>
         <property name="text">
          <string>Restore All Windows</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QPushButton" name="pushButtonAddTopmostFlag">
+        <property name="minimumSize">
+         <size>
+          <width>180</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Add Topmost Flag</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonRemoveTopmostFlag">
+        <property name="minimumSize">
+         <size>
+          <width>180</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Remove Topmost Flag</string>
         </property>
        </widget>
       </item>

@@ -1,7 +1,6 @@
 #include "process_scanner_dialog.hxx"
 #include "ui_process_scanner_dialog.h"
 
-
 QList<QTreeWidgetItem*> ProcessScannerDialog::collectTreeRoot(QTreeWidget* tree) {
     QList<QTreeWidgetItem*> root_items_list;
     root_items_list.reserve(tree->topLevelItemCount());
@@ -37,8 +36,8 @@ void ProcessScannerDialog::setAllTopLevelItemsHidden(bool hidden) {
 }
 
 void ProcessScannerDialog::applySearchFilterToTree() {
-    auto search_filter  { ui->linSearchFilter->text() };
-    auto tree           { ui->twProcessTree };
+    auto search_filter    { ui->linSearchFilter->text() };
+    auto tree             { ui->twProcessTree           };
 
     setAllTopLevelItemsHidden(search_filter.size());
 
@@ -129,8 +128,8 @@ void ProcessScannerDialog::integrateProcessInfoIntoTree(ProcessScanner::ProcessI
         processWindowHandleMap[window.WindowHash] = window.WindowHandle;
     }
 
-    auto tree        { ui->twProcessTree };
-    auto root_items  { collectTreeRoot(tree) };
+    auto tree          { ui->twProcessTree     };
+    auto root_items    { collectTreeRoot(tree) };
 
     auto existing_root_item {
         std::find_if(root_items.begin(), root_items.end(), [&](QTreeWidgetItem* item) -> bool {
@@ -303,17 +302,13 @@ void ProcessScannerDialog::showTreeWidgetContextMenu(const QPoint& point) {
 
 ProcessScannerDialog::ProcessScannerDialog(QWidget* parent, const ProcessScanner::SCAN_SCOPE& scan_scope)
     :
-      // ProcessScannerDialog Ui initialization.
-      QDialog               { parent                       },
-      ui                    { new Ui::ProcessScannerDialog },
-
-      treeWidgetContextMenu { new QMenu         { this } },
-
-      // Member variable initialization.
-      autoScannerTimer          { new QTimer },
-      autoScannerInterval       { 2500       },
-      scannerCurrentlyScanning  { false      },
-      processScannerScope       { scan_scope }
+      QDialog                     { parent                       },
+      ui                          { new Ui::ProcessScannerDialog },
+      treeWidgetContextMenu       { new QMenu { this }           },
+      autoScannerTimer            { new QTimer                   },
+      autoScannerInterval         { 2500                         },
+      scannerCurrentlyScanning    { false                        },
+      processScannerScope         { scan_scope                   }
 {
     ui->setupUi(this);
 

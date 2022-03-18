@@ -45,37 +45,41 @@ protected:
     HWND selectedWindowHandle;
 
     static LWA        getLWAttributes(const HWND& window_handle);
-    static void       setWindowAlpha(const  HWND& window_handle, const uint8_t& alpha);
-    static uint8_t    getWindowAlpha(const  HWND& window_handle);
+    static void       setWindowAlpha(const HWND& window_handle, const uint8_t& alpha);
+    static uint8_t    getWindowAlpha(const HWND& window_handle);
 
-    static bool       hasTransparencyFlag(const HWND&    window_handle);
-    static int32_t    addTransparencyFlag(const HWND&    window_handle);
-    static int32_t    removeTransparencyFlag(const HWND& window_handle);
+    static int32_t    addTopmostFlag(const HWND& window_handle);
+    static int32_t    removeTopmostFlag(const HWND& window_handle);
 
-    static bool       hasClickthroughFlag(const HWND&    window_handle);
-    static int32_t    addClickthroughFlag(const HWND&    window_handle);
+    static bool       hasClickthroughFlag(const HWND& window_handle);
+    static int32_t    addClickthroughFlag(const HWND& window_handle);
     static int32_t    removeClickthroughFlag(const HWND& window_handle);
+
+    static bool       hasTransparencyFlag(const HWND& window_handle);
+    static int32_t    addTransparencyFlag(const HWND& window_handle);
+    static int32_t    removeTransparencyFlag(const HWND& window_handle);
 
 protected slots:
     void setSelectedWindowAlphaToSliderValue();
 
-    void addTransparencyFlagToSelectedWindow();
-    void removeTransparencyFlagFromSelectedWindow();
+    void addTopmostFlagToSelectedWindow();
+    void removeTopmostFlagFromSelectedWindow();
 
     void addClickthroughFlagToSelectedWindow();
     void removeClickthroughFlagFromSelectedWindow();
 
-    void setModificationControlsEnabled(bool enabled);
-    void on_pushButtonEnableModifications_clicked();
+    void addTransparencyFlagToSelectedWindow();
+    void removeTransparencyFlagFromSelectedWindow();
 
-    // Opacity modifier widgets/
+    void setModificationControlsEnabled(bool enabled);
+    void enableModificationsForSelectedWindow();
+
     void on_spinBoxOpacityValue_valueChanged(int);
     void on_horizontalSliderOpacity_valueChanged(int);
 
-    void on_pushButtonSelectWindow_clicked();
+    void spawnProcessScannerDialog();
 
     void restoreOriginalWindowStates();
-    void on_pushButtonRestoreWindows_clicked();
 
 public:
     qsizetype LoadAndApplyStylesheet(const QString& file_path);
