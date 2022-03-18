@@ -1,7 +1,5 @@
 # Opacity Chan
-A small utility that allows you to add transparency to windows, make them clickthrough, and also make them stay on top - useful for turning programs into overlays!
-
-TODO: Actually implement the window stays on top feature.
+Opacity chan helps you add transparency to windows, make them clickthrough, and also make them stay topmost - useful for turning any program into an overlay for your games and other programs!
 
 ### Demonstration Gif
 ![](opacity-chan-demo.gif?raw=true)
