@@ -6,16 +6,18 @@ TEMPLATE = app
 CONFIG += C++17
 QMAKE_CXXFLAGS += /std:C++17
 
-SOURCES +=                             \
-    source\main.cpp                    \
-    source\main_window_dialog.cxx      \
-    source\process_scanner_dialog.cxx  \
-    source\process_scanner.cpp
+SOURCES +=                              \
+    source/process_window_list_item.cpp \
+    source/main.cpp                     \
+    source/main_window_dialog.cxx       \
+    source/process_scanner_dialog.cxx   \
+    source/process_scanner.cpp
 
-HEADERS +=                             \
-    source\main_window_dialog.hxx      \
-    source\process_scanner_dialog.hxx  \
-    source\process_scanner.hpp
+HEADERS +=                              \
+    source/process_window_list_item.hpp \
+    source/main_window_dialog.hxx       \
+    source/process_scanner_dialog.hxx   \
+    source/process_scanner.hpp
 
 FORMS +=                               \
     source\main_window_dialog.ui       \

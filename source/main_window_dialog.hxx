@@ -15,6 +15,7 @@
 #include <TlHelp32.h>
 
 #include "process_scanner_dialog.hxx"
+#include "process_window_list_item.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,60 +27,36 @@ protected:
     Ui::MainWindow* ui;
 
 protected:
-    struct LWA {
-        DWORD      ColorRef;
-        uint8_t    Alpha;
-        DWORD      Flags;
-    };
-
-    struct WindowState {
-        int32_t    ExStyle;
-        LWA        LWAttributes;
-    };
-
     const QString styleSheetFilePath;
 
     ProcessScannerDialog* processScannerDialog;
 
-    QMap<HWND, WindowState> originalWindowStates;
-    HWND selectedWindowHandle;
-
-    static LWA        getLWAttributes(const HWND& window_handle);
-    static void       setWindowAlpha(const HWND& window_handle, const uint8_t& alpha);
-    static uint8_t    getWindowAlpha(const HWND& window_handle);
-
-    static int32_t    addTopmostFlag(const HWND& window_handle);
-    static int32_t    removeTopmostFlag(const HWND& window_handle);
-
-    static bool       hasClickthroughFlag(const HWND& window_handle);
-    static int32_t    addClickthroughFlag(const HWND& window_handle);
-    static int32_t    removeClickthroughFlag(const HWND& window_handle);
-
-    static bool       hasTransparencyFlag(const HWND& window_handle);
-    static int32_t    addTransparencyFlag(const HWND& window_handle);
-    static int32_t    removeTransparencyFlag(const HWND& window_handle);
-
 protected slots:
-    void setSelectedWindowAlphaToSliderValue();
-
-    void addTopmostFlagToSelectedWindow();
-    void removeTopmostFlagFromSelectedWindow();
-
-    void addClickthroughFlagToSelectedWindow();
-    void removeClickthroughFlagFromSelectedWindow();
-
-    void addTransparencyFlagToSelectedWindow();
-    void removeTransparencyFlagFromSelectedWindow();
-
-    void setModificationControlsEnabled(bool enabled);
-    void enableModificationsForSelectedWindow();
-
-    void on_spinBoxOpacityValue_valueChanged(int);
-    void on_horizontalSliderOpacity_valueChanged(int);
-
     void spawnProcessScannerDialog();
+    void startWindowGrabber();
 
-    void restoreOriginalWindowStates();
+    void selectedInactiveWindows_Activate();
+    void selectedActiveWindows_Deactivate();
+
+    // Enable / disable clickthrough.
+    void selectedActiveWindows_EnableClickthrough();
+    void selectedActiveWindows_DisableClickthrough();
+
+    // Enable / disable transparency.
+    void selectedActiveWindows_EnableTransparency();
+    void selectedActiveWindows_DisableTransparency();
+
+    // Enable / disable topmost.
+    void selectedActiveWindows_EnableTopmost();
+    void selectedActiveWindows_DisableTopmost();
+
+    // Set the alpha of the selected windows to the value of the alpha slider.
+    void selectedActiveWindows_SyncAlphaToSlider();
+
+
+
+    void on_spinBoxAlpha_valueChanged(int);
+    void on_horizontalSliderAlpha_valueChanged(int);
 
 public:
     qsizetype LoadAndApplyStylesheet(const QString& file_path);

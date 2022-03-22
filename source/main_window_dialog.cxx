@@ -1,134 +1,7 @@
 #include "main_window_dialog.hxx"
 #include "ui_main_window_dialog.h"
 
-MainWindow::LWA MainWindow::getLWAttributes(const HWND& window_handle) {
-    LWA attributes;
-    GetLayeredWindowAttributes(window_handle, &attributes.ColorRef, &attributes.Alpha, &attributes.Flags);
-    return attributes;
-}
-
-void MainWindow::setWindowAlpha(const HWND& window_handle, const uint8_t& alpha) {
-    if(hasTransparencyFlag(window_handle)) {
-        const int32_t& success {
-            SetLayeredWindowAttributes(window_handle, NULL, alpha, LWA_ALPHA)
-        };
-
-        if(!success) {
-            const uint32_t& error_code { GetLastError() };
-        }
-    }
-}
-
-uint8_t MainWindow::getWindowAlpha(const HWND& window_handle) {
-    uint8_t alpha { NULL };
-    GetLayeredWindowAttributes(window_handle, nullptr, &alpha, nullptr);
-    return alpha;
-}
-
-int32_t MainWindow::addTopmostFlag(const HWND& window_handle) {
-    return SetWindowPos(window_handle, HWND_TOPMOST, NULL, NULL, NULL, NULL, SWP_NOMOVE | SWP_NOSIZE);
-}
-
-int32_t MainWindow::removeTopmostFlag(const HWND& window_handle) {
-    return SetWindowPos(window_handle, HWND_NOTOPMOST, NULL, NULL, NULL, NULL, SWP_NOMOVE | SWP_NOSIZE);
-}
-
-bool MainWindow::hasClickthroughFlag(const HWND& window_handle) {
-    return GetWindowLong(window_handle, GWL_EXSTYLE) & WS_EX_TRANSPARENT;
-}
-
-int32_t MainWindow::addClickthroughFlag(const HWND& window_handle) {
-   return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) | WS_EX_TRANSPARENT);
-}
-
-int32_t MainWindow::removeClickthroughFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) & ~WS_EX_TRANSPARENT);
-}
-
-bool MainWindow::hasTransparencyFlag(const HWND& window_handle)  {
-    return GetWindowLong(window_handle, GWL_EXSTYLE) & WS_EX_LAYERED;
-}
-
-int32_t MainWindow::addTransparencyFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) | WS_EX_LAYERED);
-}
-
-int32_t MainWindow::removeTransparencyFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) & ~WS_EX_LAYERED);
-}
-
-void MainWindow::setSelectedWindowAlphaToSliderValue() {
-    if(selectedWindowHandle != nullptr && IsWindow(selectedWindowHandle) && hasTransparencyFlag(selectedWindowHandle) && originalWindowStates.contains(selectedWindowHandle)) {
-        setWindowAlpha(selectedWindowHandle, static_cast<uint8_t>(ui->spinBoxOpacityValue->value()));
-    }
-}
-
-void MainWindow::addTopmostFlagToSelectedWindow() {
-    addTopmostFlag(selectedWindowHandle);
-}
-
-void MainWindow::removeTopmostFlagFromSelectedWindow() {
-    removeTopmostFlag(selectedWindowHandle);
-}
-
-void MainWindow::addClickthroughFlagToSelectedWindow() {
-    addClickthroughFlag(selectedWindowHandle);
-}
-
-void MainWindow::removeClickthroughFlagFromSelectedWindow() {
-    removeClickthroughFlag(selectedWindowHandle);
-}
-
-void MainWindow::addTransparencyFlagToSelectedWindow() {
-    addTransparencyFlag(selectedWindowHandle);
-}
-
-void MainWindow::removeTransparencyFlagFromSelectedWindow() {
-    removeTransparencyFlag(selectedWindowHandle);
-}
-
-void MainWindow::setModificationControlsEnabled(bool enabled) {
-    ui->pushButtonAddTopmostFlag->setEnabled(enabled);
-    ui->pushButtonRemoveTopmostFlag->setEnabled(enabled);
-
-    ui->pushButtonAddClickthroughFlag->setEnabled(enabled);
-    ui->pushButtonRemoveClickthroughFlag->setEnabled(enabled);
-
-    ui->pushButtonRemoveTransparencyFlag->setEnabled(enabled);
-    ui->pushButtonAddTransparencyFlag->setEnabled(enabled);
-
-    ui->horizontalSliderOpacity->setEnabled(enabled);
-    ui->spinBoxOpacityValue->setEnabled(enabled);
-}
-
-void MainWindow::enableModificationsForSelectedWindow() {
-    if(selectedWindowHandle != nullptr && IsWindow(selectedWindowHandle) && !originalWindowStates.contains(selectedWindowHandle)) {
-        WindowState original_state;
-        ZeroMemory(&original_state, sizeof(original_state));
-
-        original_state.ExStyle = GetWindowLong(selectedWindowHandle, GWL_EXSTYLE);
-
-        if(hasTransparencyFlag(selectedWindowHandle)) {
-            original_state.LWAttributes = getLWAttributes(selectedWindowHandle);
-        }
-
-        originalWindowStates[selectedWindowHandle] = original_state;
-
-        setModificationControlsEnabled(true);
-    } else if(originalWindowStates.contains(selectedWindowHandle)) {
-        setModificationControlsEnabled(true);
-    }
-}
-
-void MainWindow::on_spinBoxOpacityValue_valueChanged(int new_value) {
-    ui->horizontalSliderOpacity->setValue(new_value);
-    setSelectedWindowAlphaToSliderValue();
-}
-
-void MainWindow::on_horizontalSliderOpacity_valueChanged(int new_value) {
-    ui->spinBoxOpacityValue->setValue(new_value);
-    setSelectedWindowAlphaToSliderValue();
-}
+// Make a timer that periodically gets rid of closed windows from the list via IsWindow
 
 void MainWindow::spawnProcessScannerDialog() {
     if(processScannerDialog == nullptr) {
@@ -141,10 +14,18 @@ void MainWindow::spawnProcessScannerDialog() {
             delete processScannerDialog;
             processScannerDialog = nullptr;
 
+            if(IsWindow(window_handle)) {
+                ProcessWindowListItem* new_item { new ProcessWindowListItem { window_handle } };
+                new_item->setText(window_title);
+
+                ui->listWidgetInactiveWindows->addItem(new_item);
+            }
+
+            /*
             ui->pushButtonSelectWindow->setEnabled(true);
 
             if(IsWindow(window_handle)) {
-                ui->lineEditSelectedWindowTitle->setText(window_title);
+                // ui->lineEditSelectedWindowTitle->setText(window_title);
                 selectedWindowHandle = window_handle;
 
                 setModificationControlsEnabled(originalWindowStates.contains(window_handle));
@@ -153,13 +34,15 @@ void MainWindow::spawnProcessScannerDialog() {
                     LWA lw_attributes { getLWAttributes(window_handle) };
 
                     if(lw_attributes.Flags & LWA_ALPHA) {
-                        ui->horizontalSliderOpacity->setValue(lw_attributes.Alpha);
+                        ui->horizontalSliderAlpha->setValue(lw_attributes.Alpha);
                     }
                 }
             } else {
-                ui->lineEditSelectedWindowTitle->clear();
+                // ui->lineEditSelectedWindowTitle->clear();
                 selectedWindowHandle = nullptr;
             }
+
+            */
         });
 
         connect(processScannerDialog, &ProcessScannerDialog::destroyed, [this]() -> void {
@@ -169,20 +52,68 @@ void MainWindow::spawnProcessScannerDialog() {
     }
 }
 
-void MainWindow::restoreOriginalWindowStates() {
-    for(const HWND& window_handle : originalWindowStates.keys()) {
-        const WindowState& original_state { originalWindowStates[window_handle] };
+void MainWindow::startWindowGrabber() {
 
-        if(IsWindow(window_handle)) {
-            SetWindowLong(window_handle, GWL_EXSTYLE, original_state.ExStyle);
-            removeTopmostFlag(window_handle);
+}
 
-            if(original_state.ExStyle & WS_EX_LAYERED) {
-                const LWA& lwa { original_state.LWAttributes };
-                SetLayeredWindowAttributes(window_handle, lwa.ColorRef, lwa.Alpha, lwa.Flags);
-            }
-        }
+void MainWindow::selectedInactiveWindows_Activate() {
+    for(QListWidgetItem* selected_item : ui->listWidgetInactiveWindows->selectedItems()) {
+        ProcessWindowListItem* selected_window_item { reinterpret_cast<ProcessWindowListItem*>(selected_item) };
+        selected_window_item->ApplyModifiedState();
+
+        ui->listWidgetActiveWindows->addItem(
+                    ui->listWidgetInactiveWindows->takeItem(
+                        ui->listWidgetInactiveWindows->row(selected_item)));
     }
+}
+
+void MainWindow::selectedActiveWindows_Deactivate() {
+    for(QListWidgetItem* selected_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ProcessWindowListItem* selected_window_item { reinterpret_cast<ProcessWindowListItem*>(selected_item) };
+        selected_window_item->ApplyOriginalState();
+
+        ui->listWidgetInactiveWindows->addItem(
+                    ui->listWidgetActiveWindows->takeItem(
+                        ui->listWidgetActiveWindows->row(selected_item)));
+    }
+}
+
+void MainWindow::selectedActiveWindows_EnableClickthrough() {
+
+}
+
+void MainWindow::selectedActiveWindows_DisableClickthrough() {
+
+}
+
+void MainWindow::selectedActiveWindows_EnableTransparency() {
+
+}
+
+void MainWindow::selectedActiveWindows_DisableTransparency() {
+
+}
+
+void MainWindow::selectedActiveWindows_EnableTopmost() {
+
+}
+
+void MainWindow::selectedActiveWindows_DisableTopmost() {
+
+}
+
+void MainWindow::selectedActiveWindows_SyncAlphaToSlider() {
+
+}
+
+void MainWindow::on_spinBoxAlpha_valueChanged(int new_value) {
+    ui->horizontalSliderAlpha->setValue(new_value);
+    selectedActiveWindows_SyncAlphaToSlider();
+}
+
+void MainWindow::on_horizontalSliderAlpha_valueChanged(int new_value) {
+    ui->spinBoxAlpha->setValue(new_value);
+    selectedActiveWindows_SyncAlphaToSlider();
 }
 
 qsizetype MainWindow::LoadAndApplyStylesheet(const QString& style_sheet_file_path) {
@@ -217,8 +148,7 @@ MainWindow::MainWindow(QWidget* parent)
       QMainWindow             { parent                },
       ui                      { new Ui::MainWindow    },
       styleSheetFilePath      { "./styles/indigo.qss" },
-      processScannerDialog    { nullptr               },
-      selectedWindowHandle    { nullptr               }
+      processScannerDialog    { nullptr               }
 {
     ui->setupUi(this);
 
@@ -234,43 +164,25 @@ MainWindow::MainWindow(QWidget* parent)
     LoadAndApplyStylesheet(styleSheetFilePath);
 
     ui->centralwidget->layout()->setAlignment(Qt::AlignTop);
-    setMaximumHeight(height());
 
-    setModificationControlsEnabled(false);
+    connect(ui->pushButtonMakeActive,   SIGNAL(clicked()),
+            this,                       SLOT(selectedInactiveWindows_Activate()));
+
+    connect(ui->pushButtonMakeInactive, SIGNAL(clicked()),
+            this,                       SLOT(selectedActiveWindows_Deactivate()));
+
+
+    // setMaximumHeight(height());
+
+    // setModificationControlsEnabled(false);
 
     connect(ui->pushButtonSelectWindow,           SIGNAL(clicked()),
             this,                                 SLOT(spawnProcessScannerDialog()));
 
-    connect(ui->pushButtonEnableModifications,    SIGNAL(clicked()),
-            this,                                 SLOT(enableModificationsForSelectedWindow()));
-
-    connect(ui->pushButtonRestoreWindows,         SIGNAL(clicked()),
-            this,                                 SLOT(restoreOriginalWindowStates()));
-
-    connect(ui->pushButtonAddTopmostFlag,         SIGNAL(clicked()),
-            this,                                 SLOT(addTopmostFlagToSelectedWindow()));
-
-    connect(ui->pushButtonRemoveTopmostFlag,      SIGNAL(clicked()),
-            this,                                 SLOT(removeTopmostFlagFromSelectedWindow()));
-
-    connect(ui->pushButtonAddClickthroughFlag,    SIGNAL(clicked()),
-            this,                                 SLOT(addClickthroughFlagToSelectedWindow()));
-
-    connect(ui->pushButtonRemoveClickthroughFlag, SIGNAL(clicked()),
-            this,                                 SLOT(removeClickthroughFlagFromSelectedWindow()));
-
-    connect(ui->pushButtonAddTransparencyFlag,    SIGNAL(clicked()),
-            this,                                 SLOT(addTransparencyFlagToSelectedWindow()));
-
-    connect(ui->pushButtonAddTransparencyFlag,    SIGNAL(clicked()),
-            this,                                 SLOT(setSelectedWindowAlphaToSliderValue()));
-
-    connect(ui->pushButtonRemoveTransparencyFlag, SIGNAL(clicked()),
-            this,                                 SLOT(removeTransparencyFlagFromSelectedWindow()));
 }
 
 MainWindow::~MainWindow() {
-    restoreOriginalWindowStates();
+    // restoreOriginalWindowStates();
     delete ui;
 }
 
