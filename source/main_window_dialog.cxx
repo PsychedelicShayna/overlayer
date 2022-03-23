@@ -96,43 +96,39 @@ void MainWindow::spawnProcessScannerDialog() {
 }
 
 void MainWindow::startWindowGrabber() {
-    const HWND& initial_foregound_window { GetForegroundWindow() };
+    if(timerWindowGrabber->isActive()) {
+        windowGrabAttemptCounter = 30;
+        return;
+    } else {
+        windowGrabAttemptCounter = 0;
 
-    QTimer* timer_window_grabber  { new QTimer { this } };
-    qint32* timer_attempt_counter { new qint32          };
+        const HWND&       initial_foregound_window    { GetForegroundWindow()            };
+        const QString&    original_button_text        { ui->pushButtonGrabWindow->text() };
 
-    QString* original_button_text { new QString { ui->pushButtonGrabWindow->text() } };
+        const auto& timer_timeout_lambda {
+            [=]() -> void {
+                if(windowGrabAttemptCounter < 30) {
+                    const HWND& current_foreground_window { GetForegroundWindow() };
+                    ui->pushButtonGrabWindow->setText("Switch To Target Window..");
 
-    *timer_attempt_counter = 0;
-
-    const auto& timer_timeout_lambda {
-        [=]() -> void {
-            if(*timer_attempt_counter < 30) {
-                const HWND& current_foreground_window { GetForegroundWindow() };
-                ui->pushButtonGrabWindow->setText("Switch To Target Window..");
-
-                if(current_foreground_window != initial_foregound_window) {
-                    addWindowToInactiveList(current_foreground_window);
-                } else {
-                    (*timer_attempt_counter)++;
-                    return;
+                    if(current_foreground_window != initial_foregound_window) {
+                        addWindowToInactiveList(current_foreground_window);
+                    } else {
+                        ++windowGrabAttemptCounter;
+                        return;
+                    }
                 }
+
+                ui->pushButtonGrabWindow->setText(original_button_text);
+                timerWindowGrabber->stop();
             }
+        };
 
-            ui->pushButtonGrabWindow->setText(*original_button_text);
+        connect(timerWindowGrabber, &QTimer::timeout, timer_timeout_lambda);
 
-            delete timer_attempt_counter;
-            delete original_button_text;
-
-            timer_window_grabber->stop();
-            timer_window_grabber->deleteLater();
-        }
-    };
-
-    connect(timer_window_grabber, &QTimer::timeout, timer_timeout_lambda);
-
-    timer_timeout_lambda();
-    timer_window_grabber->start(300);
+        timer_timeout_lambda();
+        timerWindowGrabber->start(300);
+    }
 }
 
 void MainWindow::selectedInactiveWindows_Activate() {
@@ -304,7 +300,8 @@ MainWindow::MainWindow(QWidget* parent)
       hotkeyRecorderWidgetClickthrough             { new HotkeyRecorderWidget        },
       checkBoxEnableClickthrough                   { new QCheckBox   { this }        },
       clickthroughHotkeyId                         { 0x41414141                      },
-      clickthroughToggleStateEnabled               { false                           }
+      clickthroughToggleStateEnabled               { false                           },
+      timerWindowGrabber                           { new QTimer { this }             }
 {
     ui->setupUi(this);
 
