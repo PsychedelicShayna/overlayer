@@ -1,0 +1,3 @@
+[submodule "indigo-stylesheet"]
+	path = indigo-stylesheet
+	url = https://github.com/PsychedelicShayna/indigo-stylesheet.git
