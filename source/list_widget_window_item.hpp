@@ -1,5 +1,5 @@
-#ifndef PROCESSWINDOWLISTITEM_HXX
-#define PROCESSWINDOWLISTITEM_HXX
+#ifndef ListWidgetWindowItem_HXX
+#define ListWidgetWindowItem_HXX
 
 #ifndef WIN32_MEAN_AND_LEAN
 #define WIN32_MEAN_AND_LEAN
@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-class ProcessWindowListItem : public QListWidgetItem {
+class ListWidgetWindowItem : public QListWidgetItem {
 public:
     struct WindowState {
         struct LayeredWindowAttributes {
@@ -25,24 +25,30 @@ public:
             bool operator==(const LayeredWindowAttributes& other) const;
             bool operator!=(const LayeredWindowAttributes& other) const;
 
+            void Clear();
+
             LayeredWindowAttributes(const HWND& window_handle);
-            LayeredWindowAttributes() = default;
+            LayeredWindowAttributes();
         } LWAttributes;
 
         int32_t    ExStyle;
         bool       Topmost;
 
+        bool HasLayering() const;
+        void EnableLayering();
+        void DisableLayering();
+
         bool HasTopmost() const;
         void EnableTopmost();
         void DisableTopmost();
 
-        bool HasTransparency() const;
-        void EnableTransparency();
-        void DisableTransparency();
-
         bool HasClickthrough() const;
         void EnableClickthrough();
         void DisableClickthrough();
+
+        void EnableAlphaTransparencyMode();
+        void EnableColorkeyTransparencyMode();
+        void DisableTransparency();
 
         bool ApplyState(const HWND& window_handle) const;
         bool RetrieveState(const HWND& window_handle);
@@ -51,16 +57,19 @@ public:
         bool operator!=(const WindowState& other) const;
 
         WindowState(const HWND& window_handle);
-        WindowState() = default;
+        WindowState();
     }                    ModifiedState;
     const WindowState    OriginalState;
     const HWND           WindowHandle;
+    bool                 RespondToHotkey;
+
+    bool IsValidWindow() const;
 
     void ApplyModifiedState();
     void ApplyOriginalState();
     void ResetModifications();
 
-    ProcessWindowListItem(const HWND& window_handle);
+    ListWidgetWindowItem(const HWND& window_handle);
 };
 
-#endif // PROCESSWINDOWLISTITEM_HXX
+#endif // ListWidgetWindowItem_HXX

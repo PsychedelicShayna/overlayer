@@ -244,7 +244,7 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayoutTopmostButtons">
       <item>
-       <widget class="QPushButton" name="pushButtonRemoveTopmostFlag">
+       <widget class="QPushButton" name="pushButtonDisableTopmost">
         <property name="minimumSize">
          <size>
           <width>180</width>
@@ -252,12 +252,12 @@
          </size>
         </property>
         <property name="text">
-         <string>Remove Topmost Flag</string>
+         <string>Disable Topmost</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButtonAddTopmostFlag">
+       <widget class="QPushButton" name="pushButtonEnableTopmost">
         <property name="minimumSize">
          <size>
           <width>180</width>
@@ -265,7 +265,7 @@
          </size>
         </property>
         <property name="text">
-         <string>Add Topmost Flag</string>
+         <string>Enable Topmost</string>
         </property>
        </widget>
       </item>
@@ -276,7 +276,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutClickthroughButtons">
         <item>
-         <widget class="QPushButton" name="pushButtonRemoveClickthroughFlag">
+         <widget class="QPushButton" name="pushButtonDisableClickthrough">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -290,12 +290,12 @@
            </size>
           </property>
           <property name="text">
-           <string>Remove Clickthrough Flag</string>
+           <string>Disable Clickthrough</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButtonAddClickthroughFlag">
+         <widget class="QPushButton" name="pushButtonEnableClickthrough">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -309,7 +309,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Add Clickthrough Flag</string>
+           <string>Enable Clickthrough</string>
           </property>
          </widget>
         </item>
@@ -322,7 +322,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutTransparencyButtons">
         <item>
-         <widget class="QPushButton" name="pushButtonRemoveTransparencyFlag">
+         <widget class="QPushButton" name="pushButtonDisableTransparency">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -336,12 +336,12 @@
            </size>
           </property>
           <property name="text">
-           <string>Remove Transparency Flag</string>
+           <string>Disable Transparency</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButtonAddTransparencyFlag">
+         <widget class="QPushButton" name="pushButtonEnableTransparency">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -355,7 +355,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Add Transparency Flag</string>
+           <string>Enable Transparency</string>
           </property>
          </widget>
         </item>
@@ -366,7 +366,7 @@
         <item>
          <widget class="QSlider" name="horizontalSliderAlpha">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="minimumSize">
            <size>
@@ -394,7 +394,7 @@
         <item>
          <widget class="QSpinBox" name="spinBoxAlpha">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="minimumSize">
            <size>
