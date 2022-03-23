@@ -2,6 +2,8 @@
 #define MAINWINDOW_HXX
 
 #include <QtWidgets/QMainWindow>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QCheckBox>
 
 #include <QtCore/QResource>
 #include <QtCore/QFileInfo>
@@ -15,6 +17,8 @@
 #include <TlHelp32.h>
 
 #include "process_scanner_dialog.hxx"
+#include "list_widget_window_item.hpp"
+#include "hotkey_recorder_widget.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -25,61 +29,76 @@ Q_OBJECT
 protected:
     Ui::MainWindow* ui;
 
+signals:
+    void clickthroughToggleHotkeyPressed();
+
 protected:
-    struct LWA {
-        DWORD      ColorRef;
-        uint8_t    Alpha;
-        DWORD      Flags;
-    };
+    const QString            styleSheetFilePath;
+    ProcessScannerDialog*    processScannerDialog;
+    QTimer*                  timerRemoveInvalidWindows;
 
-    struct WindowState {
-        int32_t    ExStyle;
-        LWA        LWAttributes;
-    };
+    QHBoxLayout*             horizontalLayoutClickthroughHotkeyWidgets;
+    HotkeyRecorderWidget*    hotkeyRecorderWidgetClickthrough;
+    QCheckBox*               checkBoxEnableClickthrough;
+    quint32                  clickthroughHotkeyVkid;
+    quint32                  clickthroughHotkeyId;
+    bool                     clickthroughToggleStateEnabled;
 
-    const QString styleSheetFilePath;
+    bool nativeEvent(const QByteArray& event_type, void* message, qintptr* result);
 
-    ProcessScannerDialog* processScannerDialog;
+    // Make a window grabber tiemr, because clicking multiple times breaks it.
 
-    QMap<HWND, WindowState> originalWindowStates;
-    HWND selectedWindowHandle;
+protected:
+    Q_SLOT void removeInvalidWindowsFromLists();
+    Q_SLOT void addWindowToInactiveList(const HWND& window_handle);
 
-    static LWA        getLWAttributes(const HWND& window_handle);
-    static void       setWindowAlpha(const HWND& window_handle, const uint8_t& alpha);
-    static uint8_t    getWindowAlpha(const HWND& window_handle);
+    Q_SLOT void registerClickthroughHotkey(HotkeyRecorderWidget::WindowsHotkey);
+    Q_SLOT void unregisterClickthroughHotkey();
 
-    static int32_t    addTopmostFlag(const HWND& window_handle);
-    static int32_t    removeTopmostFlag(const HWND& window_handle);
+    Q_SLOT void spawnProcessScannerDialog();
 
-    static bool       hasClickthroughFlag(const HWND& window_handle);
-    static int32_t    addClickthroughFlag(const HWND& window_handle);
-    static int32_t    removeClickthroughFlag(const HWND& window_handle);
+    QTimer* timerWindowGrabber;
+    quint32 windowGrabAttemptCounter;
+    Q_SLOT void startWindowGrabber();
 
-    static bool       hasTransparencyFlag(const HWND& window_handle);
-    static int32_t    addTransparencyFlag(const HWND& window_handle);
-    static int32_t    removeTransparencyFlag(const HWND& window_handle);
+    Q_SLOT void selectedInactiveWindows_Activate();
+    Q_SLOT void selectedActiveWindows_Deactivate();
 
-protected slots:
-    void setSelectedWindowAlphaToSliderValue();
+// Operations that act on active windows that are currently selected.
+// ----------------------------------------------------------------------------------------------------
+    // Resets all modifications that have been made to the selected windows,
+    // restoring the modified settings to what they were initially.
+    Q_SLOT void selectedActiveWindows_ResetModifications();
 
-    void addTopmostFlagToSelectedWindow();
-    void removeTopmostFlagFromSelectedWindow();
+    // Enables/disables the clickthrough modification for the selected window(s).
+    Q_SLOT void selectedActiveWindows_EnableClickthrough();
+    Q_SLOT void selectedActiveWindows_DisableClickthrough();
 
-    void addClickthroughFlagToSelectedWindow();
-    void removeClickthroughFlagFromSelectedWindow();
+    // Toggles the clickthrough modification for all windows that respond to the
+    // clickthrough toggle hotkey.
+    Q_SLOT void selectedActiveWindows_ToggleClickthrough();
 
-    void addTransparencyFlagToSelectedWindow();
-    void removeTransparencyFlagFromSelectedWindow();
+    // Make the selected windows respond or not respond to the clickthrough toggle hotkey.
+    Q_SLOT void selectedActiveWindows_SetClickthroughToggleHotkeyEnabled(qint32 enabled);
 
-    void setModificationControlsEnabled(bool enabled);
-    void enableModificationsForSelectedWindow();
+    // Enable/disable the topmost modification for the selected windows.
+    Q_SLOT void selectedActiveWindows_EnableTopmost();
+    Q_SLOT void selectedActiveWindows_DisableTopmost();
 
-    void on_spinBoxOpacityValue_valueChanged(int);
-    void on_horizontalSliderOpacity_valueChanged(int);
+    // Enable/disable the transparency modification for the selected windows.
+    Q_SLOT void selectedActiveWindows_EnableTransparency();
+    Q_SLOT void selectedActiveWindows_DisableTransparency();
 
-    void spawnProcessScannerDialog();
+    // Writes the current alpha value of the alpha spinbox to the modified states
+    // of the windows currently selected.
+    Q_SLOT void selectedActiveWindows_WriteSliderAlphaToModifiedState();
 
-    void restoreOriginalWindowStates();
+    // Updates the modification control widgets with the current modification settings
+    // stored inside of the selected ListWidgetWindowItem(s).
+    Q_SLOT void selectedActiveWindows_WriteModifiedStateToWidgets();
+
+    Q_SLOT void on_spinBoxAlpha_valueChanged(int);
+    Q_SLOT void on_horizontalSliderAlpha_valueChanged(int);
 
 public:
     qsizetype LoadAndApplyStylesheet(const QString& file_path);

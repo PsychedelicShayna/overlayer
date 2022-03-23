@@ -1,133 +1,77 @@
 #include "main_window_dialog.hxx"
 #include "ui_main_window_dialog.h"
 
-MainWindow::LWA MainWindow::getLWAttributes(const HWND& window_handle) {
-    LWA attributes;
-    GetLayeredWindowAttributes(window_handle, &attributes.ColorRef, &attributes.Alpha, &attributes.Flags);
-    return attributes;
+bool MainWindow::nativeEvent(const QByteArray& event_type, void* message, qintptr* result) {
+    Q_UNUSED(event_type)
+    Q_UNUSED(result)
+
+    MSG* msg { reinterpret_cast<MSG*>(message) };
+
+    if (msg->message == WM_HOTKEY) {
+        if(msg->wParam == clickthroughHotkeyId && ((msg->lParam >> 16) & 0xFF) == clickthroughHotkeyVkid) {
+            emit clickthroughToggleHotkeyPressed();
+            return true;
+        }
+    }
+
+    return QMainWindow::nativeEvent(event_type, message, result);
 }
 
-void MainWindow::setWindowAlpha(const HWND& window_handle, const uint8_t& alpha) {
-    if(hasTransparencyFlag(window_handle)) {
-        const int32_t& success {
-            SetLayeredWindowAttributes(window_handle, NULL, alpha, LWA_ALPHA)
-        };
+void MainWindow::removeInvalidWindowsFromLists() {
+    for(qint32 i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i)) };
 
-        if(!success) {
-            const uint32_t& error_code { GetLastError() };
+        if(!list_widget_window_item->IsValidWindow()) {
+            delete list_widget_window_item;
+        }
+    }
+
+    for(qint32 i { 0 }; i < ui->listWidgetInactiveWindows->count(); ++i) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetInactiveWindows->item(i)) };
+
+        if(!list_widget_window_item->IsValidWindow()) {
+            delete list_widget_window_item;
         }
     }
 }
 
-uint8_t MainWindow::getWindowAlpha(const HWND& window_handle) {
-    uint8_t alpha { NULL };
-    GetLayeredWindowAttributes(window_handle, nullptr, &alpha, nullptr);
-    return alpha;
-}
+void MainWindow::addWindowToInactiveList(const HWND& window_handle) {
+    if(IsWindow(window_handle)) {
+        for(qint32 i { 0 }; i < ui->listWidgetInactiveWindows->count(); ++i) {
+            ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetInactiveWindows->item(i)) };
 
-int32_t MainWindow::addTopmostFlag(const HWND& window_handle) {
-    return SetWindowPos(window_handle, HWND_TOPMOST, NULL, NULL, NULL, NULL, SWP_NOMOVE | SWP_NOSIZE);
-}
-
-int32_t MainWindow::removeTopmostFlag(const HWND& window_handle) {
-    return SetWindowPos(window_handle, HWND_NOTOPMOST, NULL, NULL, NULL, NULL, SWP_NOMOVE | SWP_NOSIZE);
-}
-
-bool MainWindow::hasClickthroughFlag(const HWND& window_handle) {
-    return GetWindowLong(window_handle, GWL_EXSTYLE) & WS_EX_TRANSPARENT;
-}
-
-int32_t MainWindow::addClickthroughFlag(const HWND& window_handle) {
-   return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) | WS_EX_TRANSPARENT);
-}
-
-int32_t MainWindow::removeClickthroughFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) & ~WS_EX_TRANSPARENT);
-}
-
-bool MainWindow::hasTransparencyFlag(const HWND& window_handle)  {
-    return GetWindowLong(window_handle, GWL_EXSTYLE) & WS_EX_LAYERED;
-}
-
-int32_t MainWindow::addTransparencyFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) | WS_EX_LAYERED);
-}
-
-int32_t MainWindow::removeTransparencyFlag(const HWND& window_handle) {
-    return SetWindowLong(window_handle, GWL_EXSTYLE, GetWindowLong(window_handle, GWL_EXSTYLE) & ~WS_EX_LAYERED);
-}
-
-void MainWindow::setSelectedWindowAlphaToSliderValue() {
-    if(selectedWindowHandle != nullptr && IsWindow(selectedWindowHandle) && hasTransparencyFlag(selectedWindowHandle) && originalWindowStates.contains(selectedWindowHandle)) {
-        setWindowAlpha(selectedWindowHandle, static_cast<uint8_t>(ui->spinBoxOpacityValue->value()));
-    }
-}
-
-void MainWindow::addTopmostFlagToSelectedWindow() {
-    addTopmostFlag(selectedWindowHandle);
-}
-
-void MainWindow::removeTopmostFlagFromSelectedWindow() {
-    removeTopmostFlag(selectedWindowHandle);
-}
-
-void MainWindow::addClickthroughFlagToSelectedWindow() {
-    addClickthroughFlag(selectedWindowHandle);
-}
-
-void MainWindow::removeClickthroughFlagFromSelectedWindow() {
-    removeClickthroughFlag(selectedWindowHandle);
-}
-
-void MainWindow::addTransparencyFlagToSelectedWindow() {
-    addTransparencyFlag(selectedWindowHandle);
-}
-
-void MainWindow::removeTransparencyFlagFromSelectedWindow() {
-    removeTransparencyFlag(selectedWindowHandle);
-}
-
-void MainWindow::setModificationControlsEnabled(bool enabled) {
-    ui->pushButtonAddTopmostFlag->setEnabled(enabled);
-    ui->pushButtonRemoveTopmostFlag->setEnabled(enabled);
-
-    ui->pushButtonAddClickthroughFlag->setEnabled(enabled);
-    ui->pushButtonRemoveClickthroughFlag->setEnabled(enabled);
-
-    ui->pushButtonRemoveTransparencyFlag->setEnabled(enabled);
-    ui->pushButtonAddTransparencyFlag->setEnabled(enabled);
-
-    ui->horizontalSliderOpacity->setEnabled(enabled);
-    ui->spinBoxOpacityValue->setEnabled(enabled);
-}
-
-void MainWindow::enableModificationsForSelectedWindow() {
-    if(selectedWindowHandle != nullptr && IsWindow(selectedWindowHandle) && !originalWindowStates.contains(selectedWindowHandle)) {
-        WindowState original_state;
-        ZeroMemory(&original_state, sizeof(original_state));
-
-        original_state.ExStyle = GetWindowLong(selectedWindowHandle, GWL_EXSTYLE);
-
-        if(hasTransparencyFlag(selectedWindowHandle)) {
-            original_state.LWAttributes = getLWAttributes(selectedWindowHandle);
+            if(list_widget_window_item->WindowHandle == window_handle) {
+                return;
+            }
         }
 
-        originalWindowStates[selectedWindowHandle] = original_state;
+        for(qint32 i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
+            ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i)) };
 
-        setModificationControlsEnabled(true);
-    } else if(originalWindowStates.contains(selectedWindowHandle)) {
-        setModificationControlsEnabled(true);
+            if(list_widget_window_item->WindowHandle == window_handle) {
+                return;
+            }
+        }
+
+        wchar_t window_title_buffer[0xFF];
+        GetWindowText(window_handle, window_title_buffer, sizeof(window_title_buffer));
+
+        ListWidgetWindowItem* new_list_widget_window_item { new ListWidgetWindowItem { window_handle } };
+        new_list_widget_window_item->setText(QString::fromWCharArray(window_title_buffer));
+
+        ui->listWidgetInactiveWindows->addItem(new_list_widget_window_item);
     }
 }
 
-void MainWindow::on_spinBoxOpacityValue_valueChanged(int new_value) {
-    ui->horizontalSliderOpacity->setValue(new_value);
-    setSelectedWindowAlphaToSliderValue();
+void MainWindow::registerClickthroughHotkey(HotkeyRecorderWidget::WindowsHotkey recorded_hotkey) {
+    unregisterClickthroughHotkey();
+
+    RegisterHotKey(HWND(winId()), clickthroughHotkeyId, MOD_NOREPEAT | recorded_hotkey.Modifiers, recorded_hotkey.Vkid);
+    clickthroughHotkeyVkid = recorded_hotkey.Vkid;
 }
 
-void MainWindow::on_horizontalSliderOpacity_valueChanged(int new_value) {
-    ui->spinBoxOpacityValue->setValue(new_value);
-    setSelectedWindowAlphaToSliderValue();
+void MainWindow::unregisterClickthroughHotkey() {
+    UnregisterHotKey(HWND(winId()), clickthroughHotkeyId);
 }
 
 void MainWindow::spawnProcessScannerDialog() {
@@ -141,25 +85,7 @@ void MainWindow::spawnProcessScannerDialog() {
             delete processScannerDialog;
             processScannerDialog = nullptr;
 
-            ui->pushButtonSelectWindow->setEnabled(true);
-
-            if(IsWindow(window_handle)) {
-                ui->lineEditSelectedWindowTitle->setText(window_title);
-                selectedWindowHandle = window_handle;
-
-                setModificationControlsEnabled(originalWindowStates.contains(window_handle));
-
-                if(hasTransparencyFlag(window_handle)) {
-                    LWA lw_attributes { getLWAttributes(window_handle) };
-
-                    if(lw_attributes.Flags & LWA_ALPHA) {
-                        ui->horizontalSliderOpacity->setValue(lw_attributes.Alpha);
-                    }
-                }
-            } else {
-                ui->lineEditSelectedWindowTitle->clear();
-                selectedWindowHandle = nullptr;
-            }
+            addWindowToInactiveList(window_handle);
         });
 
         connect(processScannerDialog, &ProcessScannerDialog::destroyed, [this]() -> void {
@@ -169,20 +95,171 @@ void MainWindow::spawnProcessScannerDialog() {
     }
 }
 
-void MainWindow::restoreOriginalWindowStates() {
-    for(const HWND& window_handle : originalWindowStates.keys()) {
-        const WindowState& original_state { originalWindowStates[window_handle] };
+void MainWindow::startWindowGrabber() {
+    if(timerWindowGrabber->isActive()) {
+        windowGrabAttemptCounter = 30;
+        return;
+    } else {
+        windowGrabAttemptCounter = 0;
 
-        if(IsWindow(window_handle)) {
-            SetWindowLong(window_handle, GWL_EXSTYLE, original_state.ExStyle);
-            removeTopmostFlag(window_handle);
+        const HWND&       initial_foregound_window    { GetForegroundWindow()            };
+        const QString&    original_button_text        { ui->pushButtonGrabWindow->text() };
 
-            if(original_state.ExStyle & WS_EX_LAYERED) {
-                const LWA& lwa { original_state.LWAttributes };
-                SetLayeredWindowAttributes(window_handle, lwa.ColorRef, lwa.Alpha, lwa.Flags);
+        const auto& timer_timeout_lambda {
+            [=]() -> void {
+                if(windowGrabAttemptCounter < 30) {
+                    const HWND& current_foreground_window { GetForegroundWindow() };
+                    ui->pushButtonGrabWindow->setText("Switch To Target Window..");
+
+                    if(current_foreground_window != initial_foregound_window) {
+                        addWindowToInactiveList(current_foreground_window);
+                    } else {
+                        ++windowGrabAttemptCounter;
+                        return;
+                    }
+                }
+
+                ui->pushButtonGrabWindow->setText(original_button_text);
+                timerWindowGrabber->stop();
             }
+        };
+
+        connect(timerWindowGrabber, &QTimer::timeout, timer_timeout_lambda);
+
+        timer_timeout_lambda();
+        timerWindowGrabber->start(300);
+    }
+}
+
+void MainWindow::selectedInactiveWindows_Activate() {
+    for(QListWidgetItem* selected_item : ui->listWidgetInactiveWindows->selectedItems()) {
+        ListWidgetWindowItem* selected_list_widget_window_item { reinterpret_cast<ListWidgetWindowItem*>(selected_item) };
+        selected_list_widget_window_item->ModifiedState.EnableLayering();
+        selected_list_widget_window_item->ApplyModifiedState();
+
+        ui->listWidgetActiveWindows->addItem(
+                    ui->listWidgetInactiveWindows->takeItem(
+                        ui->listWidgetInactiveWindows->row(selected_item)));
+    }
+}
+
+void MainWindow::selectedActiveWindows_Deactivate() {
+    for(QListWidgetItem* selected_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* selected_list_widget_window_item { reinterpret_cast<ListWidgetWindowItem*>(selected_item) };
+        selected_list_widget_window_item->ApplyOriginalState();
+
+        ui->listWidgetInactiveWindows->addItem(
+                    ui->listWidgetActiveWindows->takeItem(
+                        ui->listWidgetActiveWindows->row(selected_item)));
+    }
+}
+
+void MainWindow::selectedActiveWindows_ResetModifications() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ResetModifications();
+    }
+}
+
+void MainWindow::selectedActiveWindows_EnableClickthrough() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ModifiedState.EnableClickthrough();
+        list_widget_window_item->ApplyModifiedState();
+    }
+}
+
+void MainWindow::selectedActiveWindows_DisableClickthrough() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ModifiedState.DisableClickthrough();
+        list_widget_window_item->ApplyModifiedState();
+    }
+}
+
+void MainWindow::selectedActiveWindows_ToggleClickthrough() {
+    for(qsizetype i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i)) };
+
+        if(list_widget_window_item->RespondToHotkey) {
+            if(clickthroughToggleStateEnabled) {
+                list_widget_window_item->ModifiedState.DisableClickthrough();
+            } else {
+                list_widget_window_item->ModifiedState.EnableClickthrough();
+            }
+
+            list_widget_window_item->ApplyModifiedState();
         }
     }
+
+    clickthroughToggleStateEnabled ^= true;
+}
+
+void MainWindow::selectedActiveWindows_SetClickthroughToggleHotkeyEnabled(qint32 enabled) {
+   for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->RespondToHotkey = enabled;
+    }
+}
+
+void MainWindow::selectedActiveWindows_EnableTopmost() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ModifiedState.EnableTopmost();
+        list_widget_window_item->ApplyModifiedState();
+    }
+}
+
+void MainWindow::selectedActiveWindows_DisableTopmost() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ModifiedState.DisableTopmost();
+        list_widget_window_item->ApplyModifiedState();
+    }
+}
+
+void MainWindow::selectedActiveWindows_EnableTransparency() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ModifiedState.EnableAlphaTransparencyMode();
+        list_widget_window_item->ApplyModifiedState();
+    }
+}
+
+void MainWindow::selectedActiveWindows_DisableTransparency() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ModifiedState.DisableTransparency();
+        list_widget_window_item->ApplyModifiedState();
+    }
+}
+
+void MainWindow::selectedActiveWindows_WriteSliderAlphaToModifiedState() {
+    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
+        list_widget_window_item->ModifiedState.LWAttributes.Alpha = static_cast<uint8_t>(ui->spinBoxAlpha->value());
+        list_widget_window_item->ApplyModifiedState();
+    }
+}
+
+void MainWindow::selectedActiveWindows_WriteModifiedStateToWidgets() {
+    const QList<QListWidgetItem*> selected_items { ui->listWidgetActiveWindows->selectedItems() };
+
+    if(selected_items.size() == 1) {
+        const ListWidgetWindowItem* first_list_widget_window_item { reinterpret_cast<ListWidgetWindowItem*>(selected_items.first()) };
+        ui->spinBoxAlpha->setValue(first_list_widget_window_item->ModifiedState.LWAttributes.Alpha);
+        checkBoxEnableClickthrough->setChecked(first_list_widget_window_item->RespondToHotkey);
+    }
+}
+
+void MainWindow::on_spinBoxAlpha_valueChanged(int new_value) {
+    ui->horizontalSliderAlpha->setValue(new_value);
+    selectedActiveWindows_WriteSliderAlphaToModifiedState();
+}
+
+void MainWindow::on_horizontalSliderAlpha_valueChanged(int new_value) {
+    ui->spinBoxAlpha->setValue(new_value);
+    selectedActiveWindows_WriteSliderAlphaToModifiedState();
 }
 
 qsizetype MainWindow::LoadAndApplyStylesheet(const QString& style_sheet_file_path) {
@@ -214,11 +291,17 @@ qsizetype MainWindow::LoadAndApplyStylesheet(const QString& style_sheet_file_pat
 
 MainWindow::MainWindow(QWidget* parent)
     :
-      QMainWindow             { parent                },
-      ui                      { new Ui::MainWindow    },
-      styleSheetFilePath      { "./styles/indigo.qss" },
-      processScannerDialog    { nullptr               },
-      selectedWindowHandle    { nullptr               }
+      QMainWindow                                  { parent                          },
+      ui                                           { new Ui::MainWindow              },
+      styleSheetFilePath                           { "./styles/indigo.qss"           },
+      processScannerDialog                         { nullptr                         },
+      timerRemoveInvalidWindows                    { new QTimer      { this }        },
+      horizontalLayoutClickthroughHotkeyWidgets    { new QHBoxLayout { this }        },
+      hotkeyRecorderWidgetClickthrough             { new HotkeyRecorderWidget        },
+      checkBoxEnableClickthrough                   { new QCheckBox   { this }        },
+      clickthroughHotkeyId                         { 0x41414141                      },
+      clickthroughToggleStateEnabled               { false                           },
+      timerWindowGrabber                           { new QTimer { this }             }
 {
     ui->setupUi(this);
 
@@ -231,46 +314,70 @@ MainWindow::MainWindow(QWidget* parent)
                 | Qt::WindowMaximizeButtonHint
                 );
 
+    horizontalLayoutClickthroughHotkeyWidgets->addWidget(hotkeyRecorderWidgetClickthrough);
+    horizontalLayoutClickthroughHotkeyWidgets->addWidget(checkBoxEnableClickthrough);
+    ui->verticalLayoutClickthroughWidgets->addLayout(horizontalLayoutClickthroughHotkeyWidgets);
+
+    checkBoxEnableClickthrough->setText("Enable Hotkey");
+    hotkeyRecorderWidgetClickthrough->StartRecording();
+
     LoadAndApplyStylesheet(styleSheetFilePath);
 
     ui->centralwidget->layout()->setAlignment(Qt::AlignTop);
-    setMaximumHeight(height());
 
-    setModificationControlsEnabled(false);
+    timerRemoveInvalidWindows->start(1000);
+
+    connect(timerRemoveInvalidWindows,            SIGNAL(timeout()),
+            this,                                 SLOT(removeInvalidWindowsFromLists()));
 
     connect(ui->pushButtonSelectWindow,           SIGNAL(clicked()),
             this,                                 SLOT(spawnProcessScannerDialog()));
 
-    connect(ui->pushButtonEnableModifications,    SIGNAL(clicked()),
-            this,                                 SLOT(enableModificationsForSelectedWindow()));
+    connect(ui->pushButtonGrabWindow,             SIGNAL(clicked()),
+            this,                                 SLOT(startWindowGrabber()));
 
-    connect(ui->pushButtonRestoreWindows,         SIGNAL(clicked()),
-            this,                                 SLOT(restoreOriginalWindowStates()));
+    connect(ui->pushButtonMakeActive,             SIGNAL(clicked()),
+            this,                                 SLOT(selectedInactiveWindows_Activate()));
 
-    connect(ui->pushButtonAddTopmostFlag,         SIGNAL(clicked()),
-            this,                                 SLOT(addTopmostFlagToSelectedWindow()));
+    connect(ui->pushButtonMakeInactive,           SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_Deactivate()));
 
-    connect(ui->pushButtonRemoveTopmostFlag,      SIGNAL(clicked()),
-            this,                                 SLOT(removeTopmostFlagFromSelectedWindow()));
+    connect(ui->pushButtonResetSelectedWindows,   SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_ResetModifications()));
 
-    connect(ui->pushButtonAddClickthroughFlag,    SIGNAL(clicked()),
-            this,                                 SLOT(addClickthroughFlagToSelectedWindow()));
+    connect(ui->pushButtonEnableTopmost,          SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_EnableTopmost()));
 
-    connect(ui->pushButtonRemoveClickthroughFlag, SIGNAL(clicked()),
-            this,                                 SLOT(removeClickthroughFlagFromSelectedWindow()));
+    connect(ui->pushButtonDisableTopmost,         SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_DisableTopmost()));
 
-    connect(ui->pushButtonAddTransparencyFlag,    SIGNAL(clicked()),
-            this,                                 SLOT(addTransparencyFlagToSelectedWindow()));
+    connect(ui->pushButtonEnableClickthrough,     SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_EnableClickthrough()));
 
-    connect(ui->pushButtonAddTransparencyFlag,    SIGNAL(clicked()),
-            this,                                 SLOT(setSelectedWindowAlphaToSliderValue()));
+    connect(ui->pushButtonDisableClickthrough,    SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_DisableClickthrough()));
 
-    connect(ui->pushButtonRemoveTransparencyFlag, SIGNAL(clicked()),
-            this,                                 SLOT(removeTransparencyFlagFromSelectedWindow()));
+    connect(this,                                 SIGNAL(clickthroughToggleHotkeyPressed()),
+            this,                                 SLOT(selectedActiveWindows_ToggleClickthrough()));
+
+    connect(hotkeyRecorderWidgetClickthrough,     SIGNAL(HotkeyRecorded(HotkeyRecorderWidget::WindowsHotkey)),
+            this,                                 SLOT(registerClickthroughHotkey(HotkeyRecorderWidget::WindowsHotkey)));
+
+    connect(checkBoxEnableClickthrough,           SIGNAL(stateChanged(int)),
+            this,                                 SLOT(selectedActiveWindows_SetClickthroughToggleHotkeyEnabled(qint32)));
+
+    connect(ui->pushButtonEnableTransparency,     SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_EnableTransparency()));
+
+    connect(ui->pushButtonDisableTransparency,    SIGNAL(clicked()),
+            this,                                 SLOT(selectedActiveWindows_DisableTransparency()));
+
+    connect(ui->listWidgetActiveWindows,          SIGNAL(itemSelectionChanged()),
+            this,                                 SLOT(selectedActiveWindows_WriteModifiedStateToWidgets()));
+
 }
 
 MainWindow::~MainWindow() {
-    restoreOriginalWindowStates();
     delete ui;
 }
 
