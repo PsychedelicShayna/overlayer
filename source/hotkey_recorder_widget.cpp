@@ -1,5 +1,84 @@
 #include "hotkey_recorder_widget.hpp"
 
+const QList<WINAPI_KEYBOARD_MODIFIER>& ALL_WINAPI_KEYBOARD_MODIFIERS {
+    WINMOD_ALT,
+    WINMOD_CONTROL,
+    WINMOD_SHIFT,
+    WINMOD_WIN
+};
+
+WINAPI_KEYBOARD_MODIFIER QStringToWinApiKbModifier(QString modifier_string) {
+    for(auto& character : modifier_string) {
+        character = character.toUpper();
+    }
+
+    static const QMap<QString, WINAPI_KEYBOARD_MODIFIER>& conversion_table {
+        { "ALT",     WINMOD_ALT     },
+        { "CTRL",    WINMOD_CONTROL },
+        { "CONTROL", WINMOD_CONTROL },
+        { "SHIFT",   WINMOD_SHIFT   },
+        { "SHFT",    WINMOD_SHIFT   },
+        { "WIN",     WINMOD_WIN     }
+    };
+
+    return conversion_table.contains(modifier_string) ? conversion_table[modifier_string] : WINMOD_NULLMOD;
+}
+
+WINAPI_KEYBOARD_MODIFIER QtKeyModifierToWinApiKbModifier(const Qt::Key& qtkey) {
+    static const QMap<Qt::Key, WINAPI_KEYBOARD_MODIFIER>& conversion_table {
+        { Qt::Key_Alt,        WINMOD_ALT     },
+        { Qt::Key_Control,    WINMOD_CONTROL },
+        { Qt::Key_Shift,      WINMOD_SHIFT   },
+        { Qt::Key_Meta,       WINMOD_WIN     }
+    };
+
+    return conversion_table.contains(qtkey) ? conversion_table[qtkey] : WINMOD_NULLMOD;
+}
+
+QString WinApiKbModifierToQString(const WINAPI_KEYBOARD_MODIFIER& winapi_keyboard_modifier, const bool& capitalized) {
+    static const QMap<WINAPI_KEYBOARD_MODIFIER, QString>& conversion_table {
+        { WINMOD_CONTROL,    "Ctrl" },
+        { WINMOD_SHIFT,      "Shift"   },
+        { WINMOD_ALT,        "Alt"     },
+        { WINMOD_WIN,        "Win"     }
+    };
+
+    QString converted_string {
+        conversion_table.contains(winapi_keyboard_modifier) ? conversion_table[winapi_keyboard_modifier] : ""
+    };
+
+    if(capitalized && converted_string.size()) {
+        for(QChar& character : converted_string) {
+            character = character.toUpper();
+        }
+    }
+
+    return converted_string;
+}
+
+QString WinApiKbModifierBitmaskToQString(const quint32& winapi_keyboard_modifier, const bool& capitalized) {
+    QString string_sequence;
+
+    if(winapi_keyboard_modifier & WINMOD_CONTROL)
+        string_sequence += WinApiKbModifierToQString(WINMOD_CONTROL, capitalized) + " + ";
+
+    if(winapi_keyboard_modifier & WINMOD_SHIFT)
+        string_sequence += WinApiKbModifierToQString(WINMOD_SHIFT, capitalized) + " + ";
+
+    if(winapi_keyboard_modifier & WINMOD_ALT)
+        string_sequence += WinApiKbModifierToQString(WINMOD_ALT, capitalized) + " + ";
+
+    if(winapi_keyboard_modifier & WINMOD_WIN)
+        string_sequence += WinApiKbModifierToQString(WINMOD_WIN, capitalized) + " + ";
+
+    return string_sequence;
+}
+
+QString QtKeyModifierToQString(const Qt::Key& modifier_qtkey, const bool& capitalize) {
+    const WINAPI_KEYBOARD_MODIFIER& qtkey_modifier { QtKeyModifierToWinApiKbModifier(modifier_qtkey) };
+    return WinApiKbModifierToQString(qtkey_modifier, capitalize);
+}
+
 bool HotkeyRecorderWidget::WindowsHotkey::operator==(const WindowsHotkey& other) const {
     return    QtModifiers      == other.QtModifiers
            && QtModifierKeys   == other.QtModifierKeys
@@ -55,17 +134,22 @@ bool HotkeyRecorderWidget::event(QEvent* event) {
 
     if(!isRecording) return false;
 
-    QKeyEvent*                key_event          { reinterpret_cast<QKeyEvent*>(event)    };
-    const Qt::Key&            qtkey              { static_cast<Qt::Key>(key_event->key()) };
-    const WINAPI_MODIFIER&    winapi_modifier    { QtKeyModifierToWinApiKbModifier(qtkey) };
+    QKeyEvent* key_event
+        { reinterpret_cast<QKeyEvent*>(event) };
+
+    const Qt::Key& qt_key
+        { static_cast<Qt::Key>(key_event->key()) };
+
+    const WINAPI_KEYBOARD_MODIFIER& winapi_keyboard_modifier
+        { QtKeyModifierToWinApiKbModifier(qt_key) };
 
     if(event_type == QEvent::KeyRelease) {
-        if(windowsHotkey.Vkid && !winapi_modifier && windowsHotkey != lastWindowsHotkeyEmitted) {
+        if(windowsHotkey.Vkid && !winapi_keyboard_modifier && windowsHotkey != lastWindowsHotkeyEmitted) {
             emit HotkeyRecorded(windowsHotkey);
             lastWindowsHotkeyEmitted = windowsHotkey;
             mainKeyEstablished = true;
-        } else if(!windowsHotkey.Vkid && winapi_modifier) {
-            windowsHotkey.Modifiers &= ~winapi_modifier;
+        } else if(!windowsHotkey.Vkid && winapi_keyboard_modifier) {
+            windowsHotkey.Modifiers &= ~winapi_keyboard_modifier;
 
             if(!windowsHotkey.Modifiers) {
                 windowsHotkey.Clear();
@@ -76,18 +160,18 @@ bool HotkeyRecorderWidget::event(QEvent* event) {
     }
 
     else if(event_type == QEvent::KeyPress && !key_event->isAutoRepeat() && key_event->key()) {
-        if(mainKeyEstablished && winapi_modifier) {
+        if(mainKeyEstablished && winapi_keyboard_modifier) {
             windowsHotkey.Clear();
             mainKeyEstablished = false;
         }
 
-        if(winapi_modifier) {
-            windowsHotkey.Modifiers |= winapi_modifier;
-            windowsHotkey.QtModifierKeys.append(qtkey);
+        if(winapi_keyboard_modifier) {
+            windowsHotkey.Modifiers |= winapi_keyboard_modifier;
+            windowsHotkey.QtModifierKeys.append(qt_key);
         } else {
             windowsHotkey.Vkid        = key_event->nativeVirtualKey();
             windowsHotkey.ScanCode    = key_event->nativeScanCode();
-            windowsHotkey.QtKey       = qtkey;
+            windowsHotkey.QtKey       = qt_key;
         }
 
         setText(windowsHotkey.ToString());

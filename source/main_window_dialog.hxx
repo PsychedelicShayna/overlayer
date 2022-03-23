@@ -29,6 +29,9 @@ Q_OBJECT
 protected:
     Ui::MainWindow* ui;
 
+signals:
+    void clickthroughToggleHotkeyPressed();
+
 protected:
     const QString            styleSheetFilePath;
     ProcessScannerDialog*    processScannerDialog;
@@ -39,13 +42,11 @@ protected:
     QCheckBox*               checkBoxEnableClickthrough;
     quint32                  clickthroughHotkeyVkid;
     quint32                  clickthroughHotkeyId;
-
     bool                     clickthroughToggleStateEnabled;
+    QTimer*                  timerWindowGrabber;
+
 
     bool nativeEvent(const QByteArray& event_type, void* message, qintptr* result);
-
-signals:
-    void clickthroughToggleHotkeyPressed();
 
 protected slots:
     void removeInvalidWindowsFromLists();
@@ -60,27 +61,37 @@ protected slots:
     void selectedInactiveWindows_Activate();
     void selectedActiveWindows_Deactivate();
 
+// Operations that act on active windows that are currently selected.
+// ----------------------------------------------------------------------------------------------------
+    // Resets all modifications that have been made to the selected windows,
+    // restoring the modified settings to what they were initially.
     void selectedActiveWindows_ResetModifications();
 
-    // Enable / disable clickthrough.
+    // Enables/disables the clickthrough modification for the selected window(s).
     void selectedActiveWindows_EnableClickthrough();
     void selectedActiveWindows_DisableClickthrough();
+
+    // Toggles the clickthrough modification for all windows that respond to the
+    // clickthrough toggle hotkey.
     void selectedActiveWindows_ToggleClickthrough();
+
+    // Make the selected windows respond or not respond to the clickthrough toggle hotkey.
     void selectedActiveWindows_SetClickthroughToggleHotkeyEnabled(qint32 enabled);
 
-    // Enable / disable topmost.
+    // Enable/disable the topmost modification for the selected windows.
     void selectedActiveWindows_EnableTopmost();
     void selectedActiveWindows_DisableTopmost();
 
-    // Enbable / disable alpha based transparency on layered windows.
+    // Enable/disable the transparency modification for the selected windows.
     void selectedActiveWindows_EnableTransparency();
     void selectedActiveWindows_DisableTransparency();
 
-    // Set the alpha of the selected windows to the value of the alpha slider.
+    // Writes the current alpha value of the alpha spinbox to the modified states
+    // of the windows currently selected.
     void selectedActiveWindows_WriteSliderAlphaToModifiedState();
 
-    // Set the alpha slider's value to the alpha value of the selected window.
-    // If more than one window is selected, the value is not written.
+    // Updates the modification control widgets with the current modification settings
+    // stored inside of the selected ListWidgetWindowItem(s).
     void selectedActiveWindows_WriteModifiedStateToWidgets();
 
     void on_spinBoxAlpha_valueChanged(int);

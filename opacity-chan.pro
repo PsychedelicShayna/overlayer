@@ -13,7 +13,7 @@ SOURCES +=                              \
     source/process_scanner_dialog.cxx   \
     source/process_scanner.cpp          \
     source/hotkey_recorder_widget.cpp   \
-    source/winapi_utilities.cpp
+    # source/winapi_utilities.cpp
 
 HEADERS +=                              \
     source/list_widget_window_item.hpp  \
@@ -21,7 +21,7 @@ HEADERS +=                              \
     source/process_scanner_dialog.hxx   \
     source/process_scanner.hpp          \
     source/hotkey_recorder_widget.hpp   \
-    source/winapi_utilities.hpp
+    # source/winapi_utilities.hpp
 
 FORMS +=                               \
     source\main_window_dialog.ui       \

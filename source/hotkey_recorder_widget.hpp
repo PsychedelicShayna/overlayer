@@ -1,11 +1,39 @@
 #ifndef HOTKEY_RECORDER_WIDGET_HPP
 #define HOTKEY_RECORDER_WIDGET_HPP
 
-#include <QtWidgets/QLineEdit>
-#include <QtGui/QKeyEvent>
+#include <QtCore/QString>
 #include <QtCore/QEvent>
+#include <QtCore/QMap>
 
-#include "winapi_utilities.hpp"
+#include <QtGui/QKeyEvent>
+
+#include <QtWidgets/QLineEdit>
+
+enum WINAPI_KEYBOARD_MODIFIER {
+    WINMOD_NULLMOD    = NULL,
+    WINMOD_ALT        = 0x01,
+    WINMOD_CONTROL    = 0x02,
+    WINMOD_SHIFT      = 0x04,
+    WINMOD_WIN        = 0x08
+};
+
+extern const QList<WINAPI_KEYBOARD_MODIFIER>& ALL_WINAPI_KEYBOARD_MODIFIERS;
+
+// Conversions from QStrings to keyboard modifier types.
+// ----------------------------------------------------------------------------------------------------
+extern WINAPI_KEYBOARD_MODIFIER QStringToWinApiKbModifier(QString);
+extern WINAPI_KEYBOARD_MODIFIER QtKeyModifierToWinApiKbModifier(const Qt::Key&);
+
+// Conversions from keyboard modifier types to QStrings.
+// ----------------------------------------------------------------------------------------------------
+extern QString WinApiKbModifierToQString(const WINAPI_KEYBOARD_MODIFIER& modifier,
+                                         const bool& capitalize = false);
+
+extern QString WinApiKbModifierBitmaskToQString(const quint32& modifiers,
+                                                const bool& capitalize = false);
+
+extern QString QtKeyModifierToQString(const Qt::Key& modifier_qtkey,
+                                      const bool& capitalize = false);
 
 class HotkeyRecorderWidget : public QLineEdit {
 Q_OBJECT
