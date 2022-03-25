@@ -8,3 +8,7 @@
 
 !source/
 !indigo-stylesheet
+
+!release/
+release/*
+!release/create_release_archive.py
