@@ -378,6 +378,13 @@ MainWindow::MainWindow(QWidget* parent)
 }
 
 MainWindow::~MainWindow() {
+    for(qint32 i { 0 }; i < ui->listWidgetInactiveWindows->count(); ++i) {
+        dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetInactiveWindows->item(i))->ApplyOriginalState();
+    }
+
+    for(qint32 i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
+        dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i))->ApplyOriginalState();
+    }
+
     delete ui;
 }
-
