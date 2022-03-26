@@ -1,13 +1,15 @@
 #ifndef MAINWINDOW_HXX
 #define MAINWINDOW_HXX
 
-#include <QtWidgets/QMainWindow>
-#include <QtWidgets/QHBoxLayout>
-#include <QtWidgets/QCheckBox>
-
 #include <QtCore/QResource>
 #include <QtCore/QFileInfo>
 #include <QtCore/QFile>
+
+#include <QtGui/QShortcut>
+
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QCheckBox>
 
 #ifndef WIN32_MEAN_AND_LEAN
 #define WIN32_MEAN_AND_LEAN
@@ -60,6 +62,8 @@ protected:
     QTimer* timerWindowGrabber;
     quint32 windowGrabAttemptCounter;
     Q_SLOT void startWindowGrabber();
+
+    Q_SLOT void selectedWindows_Delete();
 
     Q_SLOT void selectedInactiveWindows_Activate();
     Q_SLOT void selectedActiveWindows_Deactivate();

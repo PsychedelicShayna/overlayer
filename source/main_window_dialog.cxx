@@ -2,9 +2,6 @@
 #include "ui_main_window_dialog.h"
 
 bool MainWindow::nativeEvent(const QByteArray& event_type, void* message, qintptr* result) {
-    Q_UNUSED(event_type)
-    Q_UNUSED(result)
-
     MSG* msg { reinterpret_cast<MSG*>(message) };
 
     if (msg->message == WM_HOTKEY) {
@@ -22,7 +19,7 @@ void MainWindow::removeInvalidWindowsFromLists() {
         ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i)) };
 
         if(!list_widget_window_item->IsValidWindow()) {
-            delete list_widget_window_item;
+            delete ui->listWidgetActiveWindows->takeItem(ui->listWidgetActiveWindows->row(list_widget_window_item));
         }
     }
 
@@ -30,7 +27,7 @@ void MainWindow::removeInvalidWindowsFromLists() {
         ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetInactiveWindows->item(i)) };
 
         if(!list_widget_window_item->IsValidWindow()) {
-            delete list_widget_window_item;
+            delete ui->listWidgetInactiveWindows->takeItem(ui->listWidgetInactiveWindows->row(list_widget_window_item));
         }
     }
 }
@@ -92,6 +89,16 @@ void MainWindow::spawnProcessScannerDialog() {
             ui->pushButtonSelectWindow->setEnabled(true);
             processScannerDialog = nullptr;
         });
+    }
+}
+
+void MainWindow::selectedWindows_Delete() {
+    for(QListWidgetItem* list_widget_item : ui->listWidgetInactiveWindows->selectedItems()) {
+        delete ui->listWidgetInactiveWindows->takeItem(ui->listWidgetInactiveWindows->row(list_widget_item));
+    }
+
+    for(QListWidgetItem* list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
+        delete ui->listWidgetActiveWindows->takeItem(ui->listWidgetActiveWindows->row(list_widget_item));
     }
 }
 
@@ -326,6 +333,24 @@ MainWindow::MainWindow(QWidget* parent)
     ui->centralwidget->layout()->setAlignment(Qt::AlignTop);
 
     timerRemoveInvalidWindows->start(1000);
+
+    QShortcut* inactive_list_widget_del_shortcut { new QShortcut { Qt::Key_Delete, ui->listWidgetInactiveWindows } };
+    QShortcut* active_list_widget_del_shortcut   { new QShortcut { Qt::Key_Delete, ui->listWidgetActiveWindows   } };
+
+    connect(inactive_list_widget_del_shortcut,    SIGNAL(activated()),
+            this,                                 SLOT(selectedWindows_Delete()));
+
+    connect(active_list_widget_del_shortcut,      SIGNAL(activated()),
+            this,                                 SLOT(selectedWindows_Delete()));
+
+    connect(inactive_list_widget_del_shortcut,    SIGNAL(activatedAmbiguously()),
+            this,                                 SLOT(selectedWindows_Delete()));
+
+    connect(active_list_widget_del_shortcut,      SIGNAL(activatedAmbiguously()),
+            this,                                 SLOT(selectedWindows_Delete()));
+
+    connect(ui->pushButtonDeleteSelectedWindows,  SIGNAL(clicked()),
+            this,                                 SLOT(selectedWindows_Delete()));
 
     connect(timerRemoveInvalidWindows,            SIGNAL(timeout()),
             this,                                 SLOT(removeInvalidWindowsFromLists()));

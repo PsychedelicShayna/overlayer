@@ -178,3 +178,7 @@ ListWidgetWindowItem::ListWidgetWindowItem(const HWND& window_handle)
 {
 
 }
+
+ListWidgetWindowItem::~ListWidgetWindowItem() {
+    ApplyOriginalState();
+}

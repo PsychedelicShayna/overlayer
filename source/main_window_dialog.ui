@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>457</width>
-    <height>491</height>
+    <height>482</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -212,23 +212,34 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButtonResetSelectedWindows">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Reset Selected Windows</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayoutListManagementButtons" stretch="1,1">
+          <item>
+           <widget class="QPushButton" name="pushButtonResetSelectedWindows">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Reset Selected Windows</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonDeleteSelectedWindows">
+            <property name="text">
+             <string>Delete Selected Windows</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>

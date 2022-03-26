@@ -70,6 +70,7 @@ public:
     void ResetModifications();
 
     ListWidgetWindowItem(const HWND& window_handle);
+    virtual ~ListWidgetWindowItem() override;
 };
 
 #endif // ListWidgetWindowItem_HXX
