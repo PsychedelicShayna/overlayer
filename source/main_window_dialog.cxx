@@ -337,68 +337,68 @@ MainWindow::MainWindow(QWidget* parent)
     QShortcut* inactive_list_widget_del_shortcut { new QShortcut { Qt::Key_Delete, ui->listWidgetInactiveWindows } };
     QShortcut* active_list_widget_del_shortcut   { new QShortcut { Qt::Key_Delete, ui->listWidgetActiveWindows   } };
 
-    connect(inactive_list_widget_del_shortcut,    SIGNAL(activated()),
-            this,                                 SLOT(selectedWindows_Delete()));
+    connect(inactive_list_widget_del_shortcut,    &QShortcut::activated,
+            this,                                 &MainWindow::selectedWindows_Delete);
 
-    connect(active_list_widget_del_shortcut,      SIGNAL(activated()),
-            this,                                 SLOT(selectedWindows_Delete()));
+    connect(active_list_widget_del_shortcut,      &QShortcut::activated,
+            this,                                 &MainWindow::selectedWindows_Delete);
 
-    connect(inactive_list_widget_del_shortcut,    SIGNAL(activatedAmbiguously()),
-            this,                                 SLOT(selectedWindows_Delete()));
+    connect(inactive_list_widget_del_shortcut,    &QShortcut::activatedAmbiguously,
+            this,                                 &MainWindow::selectedWindows_Delete);
 
-    connect(active_list_widget_del_shortcut,      SIGNAL(activatedAmbiguously()),
-            this,                                 SLOT(selectedWindows_Delete()));
+    connect(active_list_widget_del_shortcut,      &QShortcut::activatedAmbiguously,
+            this,                                 &MainWindow::selectedWindows_Delete);
 
-    connect(ui->pushButtonDeleteSelectedWindows,  SIGNAL(clicked()),
-            this,                                 SLOT(selectedWindows_Delete()));
+    connect(ui->pushButtonDeleteSelectedWindows,  &QPushButton::clicked,
+            this,                                 &MainWindow::selectedWindows_Delete);
 
-    connect(timerRemoveInvalidWindows,            SIGNAL(timeout()),
-            this,                                 SLOT(removeInvalidWindowsFromLists()));
+    connect(timerRemoveInvalidWindows,            &QTimer::timeout,
+            this,                                 &MainWindow::removeInvalidWindowsFromLists);
 
-    connect(ui->pushButtonSelectWindow,           SIGNAL(clicked()),
-            this,                                 SLOT(spawnProcessScannerDialog()));
+    connect(ui->pushButtonSelectWindow,           &QPushButton::clicked,
+            this,                                 &MainWindow::spawnProcessScannerDialog);
 
-    connect(ui->pushButtonGrabWindow,             SIGNAL(clicked()),
-            this,                                 SLOT(startWindowGrabber()));
+    connect(ui->pushButtonGrabWindow,             &QPushButton::clicked,
+            this,                                 &MainWindow::startWindowGrabber);
 
-    connect(ui->pushButtonMakeActive,             SIGNAL(clicked()),
-            this,                                 SLOT(selectedInactiveWindows_Activate()));
+    connect(ui->pushButtonMakeActive,             &QPushButton::clicked,
+            this,                                 &MainWindow::selectedInactiveWindows_Activate);
 
-    connect(ui->pushButtonMakeInactive,           SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_Deactivate()));
+    connect(ui->pushButtonMakeInactive,           &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_Deactivate);
 
-    connect(ui->pushButtonResetSelectedWindows,   SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_ResetModifications()));
+    connect(ui->pushButtonResetSelectedWindows,   &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_ResetModifications);
 
-    connect(ui->pushButtonEnableTopmost,          SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_EnableTopmost()));
+    connect(ui->pushButtonEnableTopmost,          &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_EnableTopmost);
 
-    connect(ui->pushButtonDisableTopmost,         SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_DisableTopmost()));
+    connect(ui->pushButtonDisableTopmost,         &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_DisableTopmost);
 
-    connect(ui->pushButtonEnableClickthrough,     SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_EnableClickthrough()));
+    connect(ui->pushButtonEnableClickthrough,     &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_EnableClickthrough);
 
-    connect(ui->pushButtonDisableClickthrough,    SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_DisableClickthrough()));
+    connect(ui->pushButtonDisableClickthrough,    &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_DisableClickthrough);
 
-    connect(this,                                 SIGNAL(clickthroughToggleHotkeyPressed()),
-            this,                                 SLOT(selectedActiveWindows_ToggleClickthrough()));
+    connect(this,                                 &MainWindow::clickthroughToggleHotkeyPressed,
+            this,                                 &MainWindow::selectedActiveWindows_ToggleClickthrough);
 
-    connect(hotkeyRecorderWidgetClickthrough,     SIGNAL(HotkeyRecorded(HotkeyRecorderWidget::Hotkey)),
-            this,                                 SLOT(registerClickthroughHotkey(HotkeyRecorderWidget::Hotkey)));
+    connect(hotkeyRecorderWidgetClickthrough,     &HotkeyRecorderWidget::HotkeyRecorded,
+            this,                                 &MainWindow::registerClickthroughHotkey);
 
-    connect(checkBoxEnableClickthrough,           SIGNAL(stateChanged(int)),
-            this,                                 SLOT(selectedActiveWindows_SetClickthroughToggleHotkeyEnabled(qint32)));
+    connect(checkBoxEnableClickthrough,           &QCheckBox::stateChanged,
+            this,                                 &MainWindow::selectedActiveWindows_SetClickthroughToggleHotkeyEnabled);
 
-    connect(ui->pushButtonEnableTransparency,     SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_EnableTransparency()));
+    connect(ui->pushButtonEnableTransparency,     &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_EnableTransparency);
 
-    connect(ui->pushButtonDisableTransparency,    SIGNAL(clicked()),
-            this,                                 SLOT(selectedActiveWindows_DisableTransparency()));
+    connect(ui->pushButtonDisableTransparency,    &QPushButton::clicked,
+            this,                                 &MainWindow::selectedActiveWindows_DisableTransparency);
 
-    connect(ui->listWidgetActiveWindows,          SIGNAL(itemSelectionChanged()),
-            this,                                 SLOT(selectedActiveWindows_WriteModifiedStateToWidgets()));
+    connect(ui->listWidgetActiveWindows,          &QListWidget::itemSelectionChanged,
+            this,                                 &MainWindow::selectedActiveWindows_WriteModifiedStateToWidgets);
 
 }
 
