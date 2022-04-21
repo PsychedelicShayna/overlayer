@@ -6,13 +6,17 @@ TEMPLATE = app
 CONFIG += C++17
 QMAKE_CXXFLAGS += /std:c++17
 
+INCLUDEPATH += submodules/qt-hotkey-recorder-widget/source/
+SOURCES     += submodules/qt-hotkey-recorder-widget/source/hotkey_recorder_widget.cpp
+HEADERS     += submodules/qt-hotkey-recorder-widget/source/hotkey_recorder_widget.hpp
+
 SOURCES +=                              \
     source/list_widget_window_item.cpp  \
     source/main.cpp                     \
     source/main_window_dialog.cxx       \
     source/process_scanner_dialog.cxx   \
     source/process_scanner.cpp          \
-    source/hotkey_recorder_widget.cpp   \
+    # source/hotkey_recorder_widget.cpp   \
     # source/winapi_utilities.cpp
 
 HEADERS +=                              \
@@ -20,7 +24,7 @@ HEADERS +=                              \
     source/main_window_dialog.hxx       \
     source/process_scanner_dialog.hxx   \
     source/process_scanner.hpp          \
-    source/hotkey_recorder_widget.hpp   \
+    # source/hotkey_recorder_widget.hpp   \
     # source/winapi_utilities.hpp
 
 FORMS +=                               \

@@ -20,7 +20,8 @@
 
 #include "process_scanner_dialog.hxx"
 #include "list_widget_window_item.hpp"
-#include "hotkey_recorder_widget.hpp"
+
+#include <hotkey_recorder_widget.hpp>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -46,7 +47,7 @@ protected:
     quint32                  clickthroughHotkeyId;
     bool                     clickthroughToggleStateEnabled;
 
-    bool nativeEvent(const QByteArray& event_type, void* message, qintptr* result);
+    virtual bool nativeEvent(const QByteArray& event_type, void* message, qintptr* result) override;
 
     // Make a window grabber tiemr, because clicking multiple times breaks it.
 
@@ -54,7 +55,7 @@ protected:
     Q_SLOT void removeInvalidWindowsFromLists();
     Q_SLOT void addWindowToInactiveList(const HWND& window_handle);
 
-    Q_SLOT void registerClickthroughHotkey(HotkeyRecorderWidget::WindowsHotkey);
+    Q_SLOT void registerClickthroughHotkey(HotkeyRecorderWidget::Hotkey);
     Q_SLOT void unregisterClickthroughHotkey();
 
     Q_SLOT void spawnProcessScannerDialog();

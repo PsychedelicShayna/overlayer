@@ -22,8 +22,8 @@ BLOAT_LIST:list = [
 ]
 
 STYLESHEET_FILES:list = [
-    "..\\indigo-stylesheet\\indigo.qss",
-    "..\\indigo-stylesheet\\indigo.rcc"
+    "..\\submodules\\indigo-stylesheet\\indigo.qss",
+    "..\\submodules\\indigo-stylesheet\\indigo.rcc"
 ]
 
 def invoke_windeployqt(target_executable:str, windeployqt_path:str = None) -> int:

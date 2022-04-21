@@ -60,7 +60,7 @@ void MainWindow::addWindowToInactiveList(const HWND& window_handle) {
     }
 }
 
-void MainWindow::registerClickthroughHotkey(HotkeyRecorderWidget::WindowsHotkey recorded_hotkey) {
+void MainWindow::registerClickthroughHotkey(HotkeyRecorderWidget::Hotkey recorded_hotkey) {
     unregisterClickthroughHotkey();
 
     RegisterHotKey(HWND(winId()), clickthroughHotkeyId, MOD_NOREPEAT | recorded_hotkey.Modifiers, recorded_hotkey.Vkid);
@@ -385,8 +385,8 @@ MainWindow::MainWindow(QWidget* parent)
     connect(this,                                 SIGNAL(clickthroughToggleHotkeyPressed()),
             this,                                 SLOT(selectedActiveWindows_ToggleClickthrough()));
 
-    connect(hotkeyRecorderWidgetClickthrough,     SIGNAL(HotkeyRecorded(HotkeyRecorderWidget::WindowsHotkey)),
-            this,                                 SLOT(registerClickthroughHotkey(HotkeyRecorderWidget::WindowsHotkey)));
+    connect(hotkeyRecorderWidgetClickthrough,     SIGNAL(HotkeyRecorded(HotkeyRecorderWidget::Hotkey)),
+            this,                                 SLOT(registerClickthroughHotkey(HotkeyRecorderWidget::Hotkey)));
 
     connect(checkBoxEnableClickthrough,           SIGNAL(stateChanged(int)),
             this,                                 SLOT(selectedActiveWindows_SetClickthroughToggleHotkeyEnabled(qint32)));
