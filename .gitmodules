@@ -1,3 +1,6 @@
-[submodule "indigo-stylesheet"]
-	path = indigo-stylesheet
-	url = https://github.com/PsychedelicShayna/indigo-stylesheet.git
+[submodule "submodules/indigo-stylesheet"]
+	path = submodules/indigo-stylesheet
+	url = https://github.com/PsychedelicShayna/indigo-stylesheet
+[submodule "submodules/qt-hotkey-recorder-widget"]
+	path = submodules/qt-hotkey-recorder-widget
+	url = https://github.com/PsychedelicShayna/qt-hotkey-recorder-widget
