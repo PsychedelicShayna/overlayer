@@ -1,6 +1,6 @@
 QT += core gui widgets
 
-TARGET = opacity-chan
+TARGET = overlayer
 TEMPLATE = app
 
 CONFIG += C++17
