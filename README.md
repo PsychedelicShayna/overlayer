@@ -12,4 +12,4 @@ In order to modify a window in the active window list, it must be selected first
 3) **Transparency** - when enabled, the selected window will be configured to use the opacity set by the slider below the control buttons. 
    
 ### Demonstration Gif
-![](overlayer.gif?raw=true)
+![](overlayer-demo.gif?raw=true)
