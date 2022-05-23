@@ -4,3 +4,7 @@
 [submodule "submodules/qt-hotkey-recorder-widget"]
 	path = submodules/qt-hotkey-recorder-widget
 	url = https://github.com/PsychedelicShayna/qt-hotkey-recorder-widget
+[submodule "submodules/qt-process-scanner-widget"]
+	path = submodules/qt-process-scanner-widget
+	url = https://github.com/PsychedelicShayna/qt-process-scanner-widget
+	branch = include
