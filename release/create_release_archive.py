@@ -3,7 +3,7 @@ from py7zr import SevenZipFile
 from pyppmd import compress
 
 WINDEPLOYQT_PATH:str = "C:\\Qt\\6.2.3\\msvc2019_64\\bin\\windeployqt.exe"
-TARGET_EXECUTABLE_NAME:str = "opacity-chan.exe"
+TARGET_EXECUTABLE_NAME:str = "overlayer.exe"
 BUILDS_DIRECTORY:str = "..\\builds"
 
 BUILD_NAMES:list = os.listdir(BUILDS_DIRECTORY)
