@@ -74,6 +74,7 @@ void MainWindow::unregisterClickthroughHotkey() {
 void MainWindow::spawnProcessScannerDialog() {
     if(processScannerDialog == nullptr) {
         processScannerDialog = new ProcessScannerDialog { this, ProcessScanner::SCAN_SCOPE::WINDOW_MODE };
+        processScannerDialog->setWindowFlags(processScannerDialog->windowFlags() & ~Qt::CustomizeWindowHint);
         processScannerDialog->show();
 
         ui->pushButtonSelectWindow->setEnabled(false);
@@ -312,14 +313,6 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
-    setWindowFlags(
-                Qt::Dialog
-                | Qt::CustomizeWindowHint
-                | Qt::WindowTitleHint
-                | Qt::WindowCloseButtonHint
-                | Qt::WindowMinimizeButtonHint
-                | Qt::WindowMaximizeButtonHint
-                );
 
     horizontalLayoutClickthroughHotkeyWidgets->addWidget(hotkeyRecorderWidgetClickthrough);
     horizontalLayoutClickthroughHotkeyWidgets->addWidget(checkBoxEnableClickthrough);

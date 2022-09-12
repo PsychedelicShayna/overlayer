@@ -31,6 +31,14 @@ FORMS += \
     submodules/qt-process-scanner-widget/process_scanner_dialog.ui
 # ==================================================
 
+
+# Resources
+# ==================================================
+RC_ICONS += resources/appicon.ico
+
+
+# Main Source Code
+# ==================================================
 LIBS += -luser32 -ladvapi32 -lkernel32
 
 SOURCES += \
