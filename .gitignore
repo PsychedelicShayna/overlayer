@@ -2,3 +2,5 @@
 *release
 .vscode
 builds
+*compile_commands.json
+.cache
