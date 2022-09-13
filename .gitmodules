@@ -8,5 +8,3 @@
 	path = submodules/qt-process-scanner-widget
 	url = https://github.com/PsychedelicShayna/qt-process-scanner-widget
 	branch = include
-[submodule ".\\qt-hotkey-recorder-widget\\"]
-	branch = include
