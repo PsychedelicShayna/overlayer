@@ -51,17 +51,17 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayoutInactiveWindows" stretch="0,1">
+       <layout class="QVBoxLayout" name="vblInactiveWindows" stretch="0,1">
         <property name="sizeConstraint">
          <enum>QLayout::SetNoConstraint</enum>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayoutWindowSelectButtons">
+         <layout class="QHBoxLayout" name="hblWindowSelectButtons">
           <property name="sizeConstraint">
            <enum>QLayout::SetNoConstraint</enum>
           </property>
           <item>
-           <widget class="QPushButton" name="pushButtonSelectWindow">
+           <widget class="QPushButton" name="pbSelectWindow">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -80,7 +80,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButtonGrabWindow">
+           <widget class="QPushButton" name="pbGrabWindow">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -101,7 +101,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QListWidget" name="listWidgetInactiveWindows">
+         <widget class="QListWidget" name="lwInactiveWindows">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -146,21 +146,21 @@
        </layout>
       </widget>
       <widget class="QWidget" name="layoutWidget">
-       <layout class="QVBoxLayout" name="verticalLayoutActiveWindows" stretch="0,0,0">
+       <layout class="QVBoxLayout" name="vblActiveWindows" stretch="0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetNoConstraint</enum>
         </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <widget class="QPushButton" name="pushButtonMakeActive">
+           <widget class="QPushButton" name="pbMakeActive">
             <property name="text">
              <string>▼  Make Active  ▼</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButtonMakeInactive">
+           <widget class="QPushButton" name="pbMakeInactive">
             <property name="text">
              <string>▲  Make Inactive  ▲</string>
             </property>
@@ -169,7 +169,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QListWidget" name="listWidgetActiveWindows">
+         <widget class="QListWidget" name="lwActiveWindows">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -212,9 +212,9 @@
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayoutListManagementButtons" stretch="1,1">
+         <layout class="QHBoxLayout" name="hblListManagementButtons" stretch="1,1">
           <item>
-           <widget class="QPushButton" name="pushButtonResetSelectedWindows">
+           <widget class="QPushButton" name="pbResetSelectedWindows">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -233,7 +233,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButtonDeleteSelectedWindows">
+           <widget class="QPushButton" name="pbDeleteSelectedWindows">
             <property name="text">
              <string>Delete Selected Windows</string>
             </property>
@@ -253,9 +253,9 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayoutTopmostButtons">
+     <layout class="QHBoxLayout" name="hblTopmostButtons">
       <item>
-       <widget class="QPushButton" name="pushButtonDisableTopmost">
+       <widget class="QPushButton" name="pbDisableTopmost">
         <property name="minimumSize">
          <size>
           <width>180</width>
@@ -268,7 +268,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButtonEnableTopmost">
+       <widget class="QPushButton" name="pbEnableTopmost">
         <property name="minimumSize">
          <size>
           <width>180</width>
@@ -283,11 +283,11 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayoutClickthroughWidgets">
+     <layout class="QVBoxLayout" name="vblClickthroughWidgets">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayoutClickthroughButtons">
+       <layout class="QHBoxLayout" name="hblClickthroughButtons">
         <item>
-         <widget class="QPushButton" name="pushButtonDisableClickthrough">
+         <widget class="QPushButton" name="pbDisableClickthrough">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -306,7 +306,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButtonEnableClickthrough">
+         <widget class="QPushButton" name="pbEnableClickthrough">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -329,11 +329,11 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayoutTransparencyWidgets">
+     <layout class="QVBoxLayout" name="vblWidgets">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayoutTransparencyButtons">
+       <layout class="QHBoxLayout" name="hblTransparencyButtons">
         <item>
-         <widget class="QPushButton" name="pushButtonDisableTransparency">
+         <widget class="QPushButton" name="pbDisableTransparency">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -352,7 +352,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButtonEnableTransparency">
+         <widget class="QPushButton" name="pbEnableTransparency">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -373,9 +373,9 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayoutTransparencyEditors">
+       <layout class="QHBoxLayout" name="hblTransparencyEditors">
         <item>
-         <widget class="QSlider" name="horizontalSliderAlpha">
+         <widget class="QSlider" name="hslAlpha">
           <property name="enabled">
            <bool>true</bool>
           </property>

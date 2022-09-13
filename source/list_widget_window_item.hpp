@@ -2,7 +2,7 @@
 #define ListWidgetWindowItem_HXX
 
 #ifndef WIN32_MEAN_AND_LEAN
-#define WIN32_MEAN_AND_LEAN
+    #define WIN32_MEAN_AND_LEAN
 #endif
 
 #include <Windows.h>
@@ -15,9 +15,9 @@ class ListWidgetWindowItem : public QListWidgetItem {
 public:
     struct WindowState {
         struct LayeredWindowAttributes {
-            ulong      ColorRef;
-            uint8_t    Alpha;
-            ulong      Flags;
+            ulong   ColorRef;
+            uint8_t Alpha;
+            ulong   Flags;
 
             void ApplyAttributes(const HWND& window_handle) const;
             void RetrieveAttributes(const HWND& window_handle);
@@ -31,8 +31,8 @@ public:
             LayeredWindowAttributes();
         } LWAttributes;
 
-        int32_t    ExStyle;
-        bool       Topmost;
+        int32_t ExStyle;
+        bool    Topmost;
 
         bool HasLayering() const;
         void EnableLayering();
@@ -56,12 +56,12 @@ public:
         bool operator==(const WindowState& other) const;
         bool operator!=(const WindowState& other) const;
 
-        WindowState(const HWND& window_handle);
+        explicit WindowState(const HWND& window_handle);
         WindowState();
-    }                    ModifiedState;
-    const WindowState    OriginalState;
-    const HWND           WindowHandle;
-    bool                 RespondToHotkey;
+    } ModifiedState;
+    const WindowState OriginalState;
+    const HWND        WindowHandle;
+    bool              RespondToHotkey;
 
     bool IsValidWindow() const;
 
@@ -69,7 +69,7 @@ public:
     void ApplyOriginalState();
     void ResetModifications();
 
-    ListWidgetWindowItem(const HWND& window_handle);
+    explicit ListWidgetWindowItem(const HWND& window_handle);
     virtual ~ListWidgetWindowItem() override;
 };
 

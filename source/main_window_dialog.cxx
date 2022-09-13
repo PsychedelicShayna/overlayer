@@ -1,11 +1,15 @@
 #include "main_window_dialog.hxx"
 #include "ui_main_window_dialog.h"
 
-bool MainWindow::nativeEvent(const QByteArray& event_type, void* message, qintptr* result) {
-    MSG* msg { reinterpret_cast<MSG*>(message) };
+bool MainWindow::nativeEvent(const QByteArray& event_type,
+                             void*             message,
+                             qintptr*          result)
+{
+    auto msg = reinterpret_cast<MSG*>(message);
 
-    if (msg->message == WM_HOTKEY) {
-        if(msg->wParam == clickthroughHotkeyId && ((msg->lParam >> 16) & 0xFF) == clickthroughHotkeyVkid) {
+    if(msg->message == WM_HOTKEY) {
+        if(msg->wParam == clickthroughHotkeyId
+           && ((msg->lParam >> 16) & 0xFF) == clickthroughHotkeyVkid) {
             emit clickthroughToggleHotkeyPressed();
             return true;
         }
@@ -14,122 +18,155 @@ bool MainWindow::nativeEvent(const QByteArray& event_type, void* message, qintpt
     return QMainWindow::nativeEvent(event_type, message, result);
 }
 
-void MainWindow::removeInvalidWindowsFromLists() {
-    for(qint32 i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i)) };
+void MainWindow::removeInvalidWindowsFromLists()
+{
+    for(qint32 i = 0; i < ui->lwActiveWindows->count(); ++i) {
+        auto item = ui->lwActiveWindows->item(i);
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
-        if(!list_widget_window_item->IsValidWindow()) {
-            delete ui->listWidgetActiveWindows->takeItem(ui->listWidgetActiveWindows->row(list_widget_window_item));
+        if(!lwwi->IsValidWindow()) {
+            auto row = ui->lwActiveWindows->row(lwwi);
+            delete ui->lwActiveWindows->takeItem(row);
         }
     }
 
-    for(qint32 i { 0 }; i < ui->listWidgetInactiveWindows->count(); ++i) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetInactiveWindows->item(i)) };
+    for(qint32 i = 0; i < ui->lwInactiveWindows->count(); ++i) {
+        auto item = ui->lwInactiveWindows->item(i);
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
-        if(!list_widget_window_item->IsValidWindow()) {
-            delete ui->listWidgetInactiveWindows->takeItem(ui->listWidgetInactiveWindows->row(list_widget_window_item));
+        if(!lwwi->IsValidWindow()) {
+            auto row = ui->lwInactiveWindows->row(lwwi);
+            delete ui->lwInactiveWindows->takeItem(row);
         }
     }
 }
 
-void MainWindow::addWindowToInactiveList(const HWND& window_handle) {
+void MainWindow::addWindowToInactiveList(const HWND& window_handle)
+{
     if(IsWindow(window_handle)) {
-        for(qint32 i { 0 }; i < ui->listWidgetInactiveWindows->count(); ++i) {
-            ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetInactiveWindows->item(i)) };
+        // Check if the window is already in the inactive window list, and
+        // return early / ignore if it is.
+        for(quint32 i = 0; i < ui->lwInactiveWindows->count(); ++i) {
+            auto item = ui->lwInactiveWindows->item(i);
+            auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
-            if(list_widget_window_item->WindowHandle == window_handle) {
+            if(lwwi->WindowHandle == window_handle) {
                 return;
             }
         }
 
-        for(qint32 i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
-            ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i)) };
+        // Check if the window is already in the active window list, and
+        // return early / ignore if it is.
+        for(quint32 i = 0; i < ui->lwActiveWindows->count(); ++i) {
+            auto item = ui->lwActiveWindows->item(i);
+            auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
-            if(list_widget_window_item->WindowHandle == window_handle) {
+            if(lwwi->WindowHandle == window_handle) {
                 return;
             }
         }
 
         wchar_t window_title_buffer[0xFF];
-        GetWindowText(window_handle, window_title_buffer, sizeof(window_title_buffer));
 
-        ListWidgetWindowItem* new_list_widget_window_item { new ListWidgetWindowItem { window_handle } };
-        new_list_widget_window_item->setText(QString::fromWCharArray(window_title_buffer));
+        GetWindowText(
+            window_handle, window_title_buffer, sizeof(window_title_buffer));
 
-        ui->listWidgetInactiveWindows->addItem(new_list_widget_window_item);
+        auto new_lwwi = new ListWidgetWindowItem {window_handle};
+
+        new_lwwi->setText(QString::fromWCharArray(window_title_buffer));
+        ui->lwInactiveWindows->addItem(new_lwwi);
     }
 }
 
-void MainWindow::registerClickthroughHotkey(HotkeyRecorderWidget::Hotkey recorded_hotkey) {
+void MainWindow::registerClickthroughHotkey(
+    HotkeyRecorderWidget::Hotkey recorded_hotkey)
+{
     unregisterClickthroughHotkey();
 
-    RegisterHotKey(HWND(winId()), clickthroughHotkeyId, MOD_NOREPEAT | recorded_hotkey.Modifiers, recorded_hotkey.Vkid);
+    RegisterHotKey(HWND(winId()),
+                   clickthroughHotkeyId,
+                   MOD_NOREPEAT | recorded_hotkey.Modifiers,
+                   recorded_hotkey.Vkid);
+
     clickthroughHotkeyVkid = recorded_hotkey.Vkid;
 }
 
-void MainWindow::unregisterClickthroughHotkey() {
+void MainWindow::unregisterClickthroughHotkey()
+{
     UnregisterHotKey(HWND(winId()), clickthroughHotkeyId);
 }
 
-void MainWindow::spawnProcessScannerDialog() {
+void MainWindow::spawnProcessScannerDialog()
+{
     if(processScannerDialog == nullptr) {
-        processScannerDialog = new ProcessScannerDialog { this, ProcessScanner::SCAN_SCOPE::WINDOW_MODE };
-        processScannerDialog->setWindowFlags(processScannerDialog->windowFlags() & ~Qt::CustomizeWindowHint);
+        processScannerDialog = new ProcessScannerDialog {
+            this, ProcessScanner::SCAN_SCOPE::WINDOW_MODE};
+
+        processScannerDialog->setWindowFlags(processScannerDialog->windowFlags()
+                                             & ~Qt::CustomizeWindowHint);
+
         processScannerDialog->show();
 
-        ui->pushButtonSelectWindow->setEnabled(false);
+        ui->pbSelectWindow->setEnabled(false);
 
-        connect(processScannerDialog, &ProcessScannerDialog::treeSelectionMade, [this](QString window_title, HWND window_handle) -> void {
-            delete processScannerDialog;
-            processScannerDialog = nullptr;
+        connect(processScannerDialog,
+                &ProcessScannerDialog::treeSelectionMade,
+                [this](QString window_title, HWND window_handle) -> void {
+                    delete processScannerDialog;
+                    processScannerDialog = nullptr;
 
-            addWindowToInactiveList(window_handle);
-        });
+                    addWindowToInactiveList(window_handle);
+                });
 
-        connect(processScannerDialog, &ProcessScannerDialog::destroyed, [this]() -> void {
-            ui->pushButtonSelectWindow->setEnabled(true);
-            processScannerDialog = nullptr;
-        });
+        connect(processScannerDialog,
+                &ProcessScannerDialog::destroyed,
+                [this]() -> void {
+                    ui->pbSelectWindow->setEnabled(true);
+                    processScannerDialog = nullptr;
+                });
     }
 }
 
-void MainWindow::selectedWindows_Delete() {
-    for(QListWidgetItem* list_widget_item : ui->listWidgetInactiveWindows->selectedItems()) {
-        delete ui->listWidgetInactiveWindows->takeItem(ui->listWidgetInactiveWindows->row(list_widget_item));
+void MainWindow::selectedWindows_Delete()
+{
+    for(auto item : ui->lwInactiveWindows->selectedItems()) {
+        const int& item_row = ui->lwInactiveWindows->row(item);
+        delete ui->lwInactiveWindows->takeItem(item_row);
     }
 
-    for(QListWidgetItem* list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        delete ui->listWidgetActiveWindows->takeItem(ui->listWidgetActiveWindows->row(list_widget_item));
+    for(auto item : ui->lwActiveWindows->selectedItems()) {
+        const int& item_row = ui->lwActiveWindows->row(item);
+        delete ui->lwActiveWindows->takeItem(item_row);
     }
 }
 
-void MainWindow::startWindowGrabber() {
+void MainWindow::startWindowGrabber()
+{
     if(timerWindowGrabber->isActive()) {
-        windowGrabAttemptCounter = 30;
+        windowGrabAttempts = 30;
         return;
     } else {
-        windowGrabAttemptCounter = 0;
+        windowGrabAttempts = 0;
 
-        const HWND&       initial_foregound_window    { GetForegroundWindow()            };
-        const QString&    original_button_text        { ui->pushButtonGrabWindow->text() };
+        const HWND&    initial_foregound_window = GetForegroundWindow();
+        const QString& original_button_text     = ui->pbGrabWindow->text();
 
-        const auto& timer_timeout_lambda {
-            [=]() -> void {
-                if(windowGrabAttemptCounter < 30) {
-                    const HWND& current_foreground_window { GetForegroundWindow() };
-                    ui->pushButtonGrabWindow->setText("Switch To Target Window..");
+        const auto& timer_timeout_lambda = [=]() -> void {
+            if(windowGrabAttempts < 30) {
+                const HWND& current_foreground_window = GetForegroundWindow();
 
-                    if(current_foreground_window != initial_foregound_window) {
-                        addWindowToInactiveList(current_foreground_window);
-                    } else {
-                        ++windowGrabAttemptCounter;
-                        return;
-                    }
+                ui->pbGrabWindow->setText("Switch To Target Window..");
+
+                if(current_foreground_window != initial_foregound_window) {
+                    addWindowToInactiveList(current_foreground_window);
+                } else {
+                    ++windowGrabAttempts;
+                    return;
                 }
-
-                ui->pushButtonGrabWindow->setText(original_button_text);
-                timerWindowGrabber->stop();
             }
+
+            ui->pbGrabWindow->setText(original_button_text);
+            timerWindowGrabber->stop();
         };
 
         connect(timerWindowGrabber, &QTimer::timeout, timer_timeout_lambda);
@@ -139,152 +176,190 @@ void MainWindow::startWindowGrabber() {
     }
 }
 
-void MainWindow::selectedInactiveWindows_Activate() {
-    for(QListWidgetItem* selected_item : ui->listWidgetInactiveWindows->selectedItems()) {
-        ListWidgetWindowItem* selected_list_widget_window_item { reinterpret_cast<ListWidgetWindowItem*>(selected_item) };
-        selected_list_widget_window_item->ModifiedState.EnableLayering();
-        selected_list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedInactiveWindows_Activate()
+{
+    for(auto& item : ui->lwInactiveWindows->selectedItems()) {
+        auto* lwwi = reinterpret_cast<ListWidgetWindowItem*>(item);
 
-        ui->listWidgetActiveWindows->addItem(
-                    ui->listWidgetInactiveWindows->takeItem(
-                        ui->listWidgetInactiveWindows->row(selected_item)));
+        lwwi->ModifiedState.EnableLayering();
+        lwwi->ApplyModifiedState();
+
+        ui->lwActiveWindows->addItem(
+            ui->lwInactiveWindows->takeItem(ui->lwInactiveWindows->row(item)));
     }
 }
 
-void MainWindow::selectedActiveWindows_Deactivate() {
-    for(QListWidgetItem* selected_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* selected_list_widget_window_item { reinterpret_cast<ListWidgetWindowItem*>(selected_item) };
-        selected_list_widget_window_item->ApplyOriginalState();
+void MainWindow::selectedActiveWindows_Deactivate()
+{
+    for(auto item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = reinterpret_cast<ListWidgetWindowItem*>(item);
 
-        ui->listWidgetInactiveWindows->addItem(
-                    ui->listWidgetActiveWindows->takeItem(
-                        ui->listWidgetActiveWindows->row(selected_item)));
+        lwwi->ApplyOriginalState();
+
+        ui->lwInactiveWindows->addItem(
+            ui->lwActiveWindows->takeItem(ui->lwActiveWindows->row(item)));
     }
 }
 
-void MainWindow::selectedActiveWindows_ResetModifications() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ResetModifications();
+void MainWindow::selectedActiveWindows_ResetModifications()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        lwwi->ResetModifications();
     }
 }
 
-void MainWindow::selectedActiveWindows_EnableClickthrough() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ModifiedState.EnableClickthrough();
-        list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedActiveWindows_EnableClickthrough()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+
+        lwwi->ModifiedState.EnableClickthrough();
+        lwwi->ApplyModifiedState();
     }
 }
 
-void MainWindow::selectedActiveWindows_DisableClickthrough() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ModifiedState.DisableClickthrough();
-        list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedActiveWindows_DisableClickthrough()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+
+        lwwi->ModifiedState.DisableClickthrough();
+        lwwi->ApplyModifiedState();
     }
 }
 
-void MainWindow::selectedActiveWindows_ToggleClickthrough() {
-    for(qsizetype i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i)) };
+void MainWindow::selectedActiveWindows_ToggleClickthrough()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
-        if(list_widget_window_item->RespondToHotkey) {
-            if(clickthroughToggleStateEnabled) {
-                list_widget_window_item->ModifiedState.DisableClickthrough();
+        if(lwwi->RespondToHotkey) {
+            if(clickthroughToggle) {
+                lwwi->ModifiedState.DisableClickthrough();
             } else {
-                list_widget_window_item->ModifiedState.EnableClickthrough();
+                lwwi->ModifiedState.EnableClickthrough();
             }
 
-            list_widget_window_item->ApplyModifiedState();
+            lwwi->ApplyModifiedState();
         }
     }
 
-    clickthroughToggleStateEnabled ^= true;
+    clickthroughToggle ^= true;
 }
 
-void MainWindow::selectedActiveWindows_SetClickthroughToggleHotkeyEnabled(qint32 enabled) {
-   for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->RespondToHotkey = enabled;
+void MainWindow::selectedActiveWin_setClickthroughHotkeyEnabled(qint32 enabled)
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi             = dynamic_cast<ListWidgetWindowItem*>(item);
+        lwwi->RespondToHotkey = enabled;
     }
 }
 
-void MainWindow::selectedActiveWindows_EnableTopmost() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ModifiedState.EnableTopmost();
-        list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedActiveWindows_EnableTopmost()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+
+        lwwi->ModifiedState.EnableTopmost();
+        lwwi->ApplyModifiedState();
     }
 }
 
-void MainWindow::selectedActiveWindows_DisableTopmost() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ModifiedState.DisableTopmost();
-        list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedActiveWindows_DisableTopmost()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+
+        lwwi->ModifiedState.DisableTopmost();
+        lwwi->ApplyModifiedState();
     }
 }
 
-void MainWindow::selectedActiveWindows_EnableTransparency() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ModifiedState.EnableAlphaTransparencyMode();
-        list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedActiveWindows_EnableTransparency()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+
+        lwwi->ModifiedState.EnableAlphaTransparencyMode();
+        lwwi->ApplyModifiedState();
     }
 }
 
-void MainWindow::selectedActiveWindows_DisableTransparency() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ModifiedState.DisableTransparency();
-        list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedActiveWindows_DisableTransparency()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+
+        lwwi->ModifiedState.DisableTransparency();
+        lwwi->ApplyModifiedState();
     }
 }
 
-void MainWindow::selectedActiveWindows_WriteSliderAlphaToModifiedState() {
-    for(auto& list_widget_item : ui->listWidgetActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* list_widget_window_item { dynamic_cast<ListWidgetWindowItem*>(list_widget_item) };
-        list_widget_window_item->ModifiedState.LWAttributes.Alpha = static_cast<uint8_t>(ui->spinBoxAlpha->value());
-        list_widget_window_item->ApplyModifiedState();
+void MainWindow::selectedActiveWindows_WriteSliderAlphaToModifiedState()
+{
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        ListWidgetWindowItem* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+
+        lwwi->ModifiedState.LWAttributes.Alpha =
+            static_cast<uint8_t>(ui->spinBoxAlpha->value());
+
+        lwwi->ApplyModifiedState();
     }
 }
 
-void MainWindow::selectedActiveWindows_WriteModifiedStateToWidgets() {
-    const QList<QListWidgetItem*> selected_items { ui->listWidgetActiveWindows->selectedItems() };
+void MainWindow::selectedActiveWindows_WriteModifiedStateToWidgets()
+{
+    const QList<QListWidgetItem*>& selected_items =
+        ui->lwActiveWindows->selectedItems();
 
     if(selected_items.size() == 1) {
-        const ListWidgetWindowItem* first_list_widget_window_item { reinterpret_cast<ListWidgetWindowItem*>(selected_items.first()) };
-        ui->spinBoxAlpha->setValue(first_list_widget_window_item->ModifiedState.LWAttributes.Alpha);
-        checkBoxEnableClickthrough->setChecked(first_list_widget_window_item->RespondToHotkey);
+        const auto& first_item =
+            dynamic_cast<ListWidgetWindowItem*>(selected_items.first());
+
+        quint8 alpha = first_item->ModifiedState.LWAttributes.Alpha;
+        ui->spinBoxAlpha->setValue(alpha);
+
+        cbEnableClickthrough->setChecked(first_item->RespondToHotkey);
     }
 }
 
-void MainWindow::on_spinBoxAlpha_valueChanged(int new_value) {
-    ui->horizontalSliderAlpha->setValue(new_value);
+void MainWindow::on_spinBoxAlpha_valueChanged(int new_value)
+{
+    ui->hslAlpha->setValue(new_value);
     selectedActiveWindows_WriteSliderAlphaToModifiedState();
 }
 
-void MainWindow::on_horizontalSliderAlpha_valueChanged(int new_value) {
+void MainWindow::on_hslAlpha_valueChanged(int new_value)
+{
     ui->spinBoxAlpha->setValue(new_value);
     selectedActiveWindows_WriteSliderAlphaToModifiedState();
 }
 
-qsizetype MainWindow::LoadAndApplyStylesheet(const QString& style_sheet_file_path) {
-    QFileInfo style_sheet_file_info { style_sheet_file_path };
+qsizetype MainWindow::LoadAndApplyStylesheet(
+    const QString& style_sheet_file_path)
+{
+    QFileInfo style_sheet_file_info {style_sheet_file_path};
 
     if(style_sheet_file_info.exists() && style_sheet_file_info.isFile()) {
-        QFile style_sheet_file_stream { style_sheet_file_path };
+        QFile style_sheet_file_stream {style_sheet_file_path};
 
         if(style_sheet_file_stream.open(QFile::ReadOnly)) {
-            const QByteArray& style_sheet_data { style_sheet_file_stream.readAll() };
+            const QByteArray& style_sheet_data =
+                style_sheet_file_stream.readAll();
+
             style_sheet_file_stream.close();
 
             if(style_sheet_data.size()) {
-                QFileInfo resource_file_info { QString { "%1/%2.rcc" }.arg(style_sheet_file_info.path(), style_sheet_file_info.completeBaseName()) };
+                QString resource_file_path = QString {"%1/%2.rcc"}.arg(
+                    style_sheet_file_info.path(),
+                    style_sheet_file_info.completeBaseName());
+
+                QFileInfo resource_file_info {resource_file_path};
 
                 if(resource_file_info.exists() && resource_file_info.isFile()) {
-                    QResource::registerResource(resource_file_info.absoluteFilePath());
+                    QResource::registerResource(
+                        resource_file_info.absoluteFilePath());
                 }
 
                 setStyleSheet(QString::fromLocal8Bit(style_sheet_data));
@@ -298,28 +373,27 @@ qsizetype MainWindow::LoadAndApplyStylesheet(const QString& style_sheet_file_pat
 }
 
 MainWindow::MainWindow(QWidget* parent)
-    :
-      QMainWindow                                  { parent                          },
-      ui                                           { new Ui::MainWindow              },
-      styleSheetFilePath                           { "./styles/indigo.qss"           },
-      processScannerDialog                         { nullptr                         },
-      timerRemoveInvalidWindows                    { new QTimer      { this }        },
-      horizontalLayoutClickthroughHotkeyWidgets    { new QHBoxLayout { this }        },
-      hotkeyRecorderWidgetClickthrough             { new HotkeyRecorderWidget        },
-      checkBoxEnableClickthrough                   { new QCheckBox   { this }        },
-      clickthroughHotkeyId                         { 0x41414141                      },
-      clickthroughToggleStateEnabled               { false                           },
-      timerWindowGrabber                           { new QTimer { this }             }
+  : QMainWindow {parent},
+    ui {new Ui::MainWindow},
+    styleSheetFilePath {"./styles/indigo.qss"},
+    processScannerDialog {nullptr},
+    timerRemoveInvalidWindows {new QTimer {this}},
+    hblClickthroughHotkeyWidgets {new QHBoxLayout {this}},
+    hkrClickthrough {new HotkeyRecorderWidget},
+    cbEnableClickthrough {new QCheckBox {this}},
+    clickthroughHotkeyId {0x41414141},
+    clickthroughToggle {false},
+    timerWindowGrabber {new QTimer {this}}
 {
     ui->setupUi(this);
 
+    hblClickthroughHotkeyWidgets->addWidget(hkrClickthrough);
+    hblClickthroughHotkeyWidgets->addWidget(cbEnableClickthrough);
 
-    horizontalLayoutClickthroughHotkeyWidgets->addWidget(hotkeyRecorderWidgetClickthrough);
-    horizontalLayoutClickthroughHotkeyWidgets->addWidget(checkBoxEnableClickthrough);
-    ui->verticalLayoutClickthroughWidgets->addLayout(horizontalLayoutClickthroughHotkeyWidgets);
+    ui->vblClickthroughWidgets->addLayout(hblClickthroughHotkeyWidgets);
 
-    checkBoxEnableClickthrough->setText("Enable Hotkey");
-    hotkeyRecorderWidgetClickthrough->StartRecording();
+    cbEnableClickthrough->setText("Enable Hotkey");
+    hkrClickthrough->StartRecording();
 
     LoadAndApplyStylesheet(styleSheetFilePath);
 
@@ -327,81 +401,129 @@ MainWindow::MainWindow(QWidget* parent)
 
     timerRemoveInvalidWindows->start(1000);
 
-    QShortcut* inactive_list_widget_del_shortcut { new QShortcut { Qt::Key_Delete, ui->listWidgetInactiveWindows } };
-    QShortcut* active_list_widget_del_shortcut   { new QShortcut { Qt::Key_Delete, ui->listWidgetActiveWindows   } };
+    auto shrt_del_inactive =
+        new QShortcut {Qt::Key_Delete, ui->lwInactiveWindows};
 
-    connect(inactive_list_widget_del_shortcut,    &QShortcut::activated,
-            this,                                 &MainWindow::selectedWindows_Delete);
+    auto shrt_del_active = new QShortcut {Qt::Key_Delete, ui->lwActiveWindows};
 
-    connect(active_list_widget_del_shortcut,      &QShortcut::activated,
-            this,                                 &MainWindow::selectedWindows_Delete);
+    connect(shrt_del_inactive,
+            &QShortcut::activated,
+            this,
+            &MainWindow::selectedWindows_Delete);
 
-    connect(inactive_list_widget_del_shortcut,    &QShortcut::activatedAmbiguously,
-            this,                                 &MainWindow::selectedWindows_Delete);
+    connect(shrt_del_active,
+            &QShortcut::activated,
+            this,
+            &MainWindow::selectedWindows_Delete);
 
-    connect(active_list_widget_del_shortcut,      &QShortcut::activatedAmbiguously,
-            this,                                 &MainWindow::selectedWindows_Delete);
+    connect(shrt_del_inactive,
+            &QShortcut::activatedAmbiguously,
+            this,
+            &MainWindow::selectedWindows_Delete);
 
-    connect(ui->pushButtonDeleteSelectedWindows,  &QPushButton::clicked,
-            this,                                 &MainWindow::selectedWindows_Delete);
+    connect(shrt_del_active,
+            &QShortcut::activatedAmbiguously,
+            this,
+            &MainWindow::selectedWindows_Delete);
 
-    connect(timerRemoveInvalidWindows,            &QTimer::timeout,
-            this,                                 &MainWindow::removeInvalidWindowsFromLists);
+    connect(ui->pbDeleteSelectedWindows,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedWindows_Delete);
 
-    connect(ui->pushButtonSelectWindow,           &QPushButton::clicked,
-            this,                                 &MainWindow::spawnProcessScannerDialog);
+    connect(timerRemoveInvalidWindows,
+            &QTimer::timeout,
+            this,
+            &MainWindow::removeInvalidWindowsFromLists);
 
-    connect(ui->pushButtonGrabWindow,             &QPushButton::clicked,
-            this,                                 &MainWindow::startWindowGrabber);
+    connect(ui->pbSelectWindow,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::spawnProcessScannerDialog);
 
-    connect(ui->pushButtonMakeActive,             &QPushButton::clicked,
-            this,                                 &MainWindow::selectedInactiveWindows_Activate);
+    connect(ui->pbGrabWindow,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::startWindowGrabber);
 
-    connect(ui->pushButtonMakeInactive,           &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_Deactivate);
+    connect(ui->pbMakeActive,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedInactiveWindows_Activate);
 
-    connect(ui->pushButtonResetSelectedWindows,   &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_ResetModifications);
+    connect(ui->pbMakeInactive,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_Deactivate);
 
-    connect(ui->pushButtonEnableTopmost,          &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_EnableTopmost);
+    connect(ui->pbResetSelectedWindows,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_ResetModifications);
 
-    connect(ui->pushButtonDisableTopmost,         &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_DisableTopmost);
+    connect(ui->pbEnableTopmost,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_EnableTopmost);
 
-    connect(ui->pushButtonEnableClickthrough,     &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_EnableClickthrough);
+    connect(ui->pbDisableTopmost,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_DisableTopmost);
 
-    connect(ui->pushButtonDisableClickthrough,    &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_DisableClickthrough);
+    connect(ui->pbEnableClickthrough,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_EnableClickthrough);
 
-    connect(this,                                 &MainWindow::clickthroughToggleHotkeyPressed,
-            this,                                 &MainWindow::selectedActiveWindows_ToggleClickthrough);
+    connect(ui->pbDisableClickthrough,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_DisableClickthrough);
 
-    connect(hotkeyRecorderWidgetClickthrough,     &HotkeyRecorderWidget::HotkeyRecorded,
-            this,                                 &MainWindow::registerClickthroughHotkey);
+    connect(this,
+            &MainWindow::clickthroughToggleHotkeyPressed,
+            this,
+            &MainWindow::selectedActiveWindows_ToggleClickthrough);
 
-    connect(checkBoxEnableClickthrough,           &QCheckBox::stateChanged,
-            this,                                 &MainWindow::selectedActiveWindows_SetClickthroughToggleHotkeyEnabled);
+    connect(hkrClickthrough,
+            &HotkeyRecorderWidget::HotkeyRecorded,
+            this,
+            &MainWindow::registerClickthroughHotkey);
 
-    connect(ui->pushButtonEnableTransparency,     &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_EnableTransparency);
+    connect(cbEnableClickthrough,
+            &QCheckBox::stateChanged,
+            this,
+            &MainWindow::selectedActiveWin_setClickthroughHotkeyEnabled);
 
-    connect(ui->pushButtonDisableTransparency,    &QPushButton::clicked,
-            this,                                 &MainWindow::selectedActiveWindows_DisableTransparency);
+    connect(ui->pbEnableTransparency,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_EnableTransparency);
 
-    connect(ui->listWidgetActiveWindows,          &QListWidget::itemSelectionChanged,
-            this,                                 &MainWindow::selectedActiveWindows_WriteModifiedStateToWidgets);
+    connect(ui->pbDisableTransparency,
+            &QPushButton::clicked,
+            this,
+            &MainWindow::selectedActiveWindows_DisableTransparency);
 
+    connect(ui->lwActiveWindows,
+            &QListWidget::itemSelectionChanged,
+            this,
+            &MainWindow::selectedActiveWindows_WriteModifiedStateToWidgets);
 }
 
-MainWindow::~MainWindow() {
-    for(qint32 i { 0 }; i < ui->listWidgetInactiveWindows->count(); ++i) {
-        dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetInactiveWindows->item(i))->ApplyOriginalState();
+MainWindow::~MainWindow()
+{
+    for(qint32 i = 0; i < ui->lwInactiveWindows->count(); ++i) {
+        auto item = ui->lwInactiveWindows->item(i);
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        lwwi->ApplyOriginalState();
     }
 
-    for(qint32 i { 0 }; i < ui->listWidgetActiveWindows->count(); ++i) {
-        dynamic_cast<ListWidgetWindowItem*>(ui->listWidgetActiveWindows->item(i))->ApplyOriginalState();
+    for(qint32 i = 0; i < ui->lwActiveWindows->count(); ++i) {
+        auto item = ui->lwActiveWindows->item(i);
+        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        lwwi->ApplyOriginalState();
     }
 
     delete ui;
