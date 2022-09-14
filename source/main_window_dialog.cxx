@@ -5,7 +5,7 @@ bool MainWindow::nativeEvent(const QByteArray& event_type,
                              void*             message,
                              qintptr*          result)
 {
-    auto msg = reinterpret_cast<MSG*>(message);
+    const auto* msg = reinterpret_cast<MSG*>(message);
 
     if(msg->message == WM_HOTKEY) {
         if(msg->wParam == clickthroughHotkeyId
@@ -21,21 +21,21 @@ bool MainWindow::nativeEvent(const QByteArray& event_type,
 void MainWindow::removeInvalidWindowsFromLists()
 {
     for(qint32 i = 0; i < ui->lwActiveWindows->count(); ++i) {
-        auto item = ui->lwActiveWindows->item(i);
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto*       item = ui->lwActiveWindows->item(i);
+        const auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         if(!lwwi->IsValidWindow()) {
-            auto row = ui->lwActiveWindows->row(lwwi);
+            const auto& row = ui->lwActiveWindows->row(lwwi);
             delete ui->lwActiveWindows->takeItem(row);
         }
     }
 
     for(qint32 i = 0; i < ui->lwInactiveWindows->count(); ++i) {
-        auto item = ui->lwInactiveWindows->item(i);
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto*       item = ui->lwInactiveWindows->item(i);
+        const auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         if(!lwwi->IsValidWindow()) {
-            auto row = ui->lwInactiveWindows->row(lwwi);
+            const auto& row = ui->lwInactiveWindows->row(lwwi);
             delete ui->lwInactiveWindows->takeItem(row);
         }
     }
@@ -47,8 +47,8 @@ void MainWindow::addWindowToInactiveList(const HWND& window_handle)
         // Check if the window is already in the inactive window list, and
         // return early / ignore if it is.
         for(quint32 i = 0; i < ui->lwInactiveWindows->count(); ++i) {
-            auto item = ui->lwInactiveWindows->item(i);
-            auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+            const auto* item = ui->lwInactiveWindows->item(i);
+            const auto* lwwi = dynamic_cast<const ListWidgetWindowItem*>(item);
 
             if(lwwi->WindowHandle == window_handle) {
                 return;
@@ -58,20 +58,20 @@ void MainWindow::addWindowToInactiveList(const HWND& window_handle)
         // Check if the window is already in the active window list, and
         // return early / ignore if it is.
         for(quint32 i = 0; i < ui->lwActiveWindows->count(); ++i) {
-            auto item = ui->lwActiveWindows->item(i);
-            auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+            const auto* item = ui->lwActiveWindows->item(i);
+            const auto* lwwi = dynamic_cast<const ListWidgetWindowItem*>(item);
 
             if(lwwi->WindowHandle == window_handle) {
                 return;
             }
         }
 
-        wchar_t window_title_buffer[0xFF];
+        wchar_t window_title_buffer[1024];
 
         GetWindowText(
             window_handle, window_title_buffer, sizeof(window_title_buffer));
 
-        auto new_lwwi = new ListWidgetWindowItem {window_handle};
+        auto* new_lwwi = new ListWidgetWindowItem {window_handle};
 
         new_lwwi->setText(QString::fromWCharArray(window_title_buffer));
         ui->lwInactiveWindows->addItem(new_lwwi);
@@ -191,8 +191,8 @@ void MainWindow::selectedInactiveWindows_Activate()
 
 void MainWindow::selectedActiveWindows_Deactivate()
 {
-    for(auto item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = reinterpret_cast<ListWidgetWindowItem*>(item);
+    for(auto& item : ui->lwActiveWindows->selectedItems()) {
+        auto* lwwi = reinterpret_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ApplyOriginalState();
 
@@ -204,7 +204,7 @@ void MainWindow::selectedActiveWindows_Deactivate()
 void MainWindow::selectedActiveWindows_ResetModifications()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
         lwwi->ResetModifications();
     }
 }
@@ -212,7 +212,7 @@ void MainWindow::selectedActiveWindows_ResetModifications()
 void MainWindow::selectedActiveWindows_EnableClickthrough()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ModifiedState.EnableClickthrough();
         lwwi->ApplyModifiedState();
@@ -222,7 +222,7 @@ void MainWindow::selectedActiveWindows_EnableClickthrough()
 void MainWindow::selectedActiveWindows_DisableClickthrough()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ModifiedState.DisableClickthrough();
         lwwi->ApplyModifiedState();
@@ -232,7 +232,7 @@ void MainWindow::selectedActiveWindows_DisableClickthrough()
 void MainWindow::selectedActiveWindows_ToggleClickthrough()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         if(lwwi->RespondToHotkey) {
             if(clickthroughToggle) {
@@ -251,7 +251,7 @@ void MainWindow::selectedActiveWindows_ToggleClickthrough()
 void MainWindow::selectedActiveWin_setClickthroughHotkeyEnabled(qint32 enabled)
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi             = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi            = dynamic_cast<ListWidgetWindowItem*>(item);
         lwwi->RespondToHotkey = enabled;
     }
 }
@@ -259,7 +259,7 @@ void MainWindow::selectedActiveWin_setClickthroughHotkeyEnabled(qint32 enabled)
 void MainWindow::selectedActiveWindows_EnableTopmost()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ModifiedState.EnableTopmost();
         lwwi->ApplyModifiedState();
@@ -269,7 +269,7 @@ void MainWindow::selectedActiveWindows_EnableTopmost()
 void MainWindow::selectedActiveWindows_DisableTopmost()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ModifiedState.DisableTopmost();
         lwwi->ApplyModifiedState();
@@ -279,7 +279,7 @@ void MainWindow::selectedActiveWindows_DisableTopmost()
 void MainWindow::selectedActiveWindows_EnableTransparency()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ModifiedState.EnableAlphaTransparencyMode();
         lwwi->ApplyModifiedState();
@@ -289,7 +289,7 @@ void MainWindow::selectedActiveWindows_EnableTransparency()
 void MainWindow::selectedActiveWindows_DisableTransparency()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ModifiedState.DisableTransparency();
         lwwi->ApplyModifiedState();
@@ -299,7 +299,7 @@ void MainWindow::selectedActiveWindows_DisableTransparency()
 void MainWindow::selectedActiveWindows_WriteSliderAlphaToModifiedState()
 {
     for(auto& item : ui->lwActiveWindows->selectedItems()) {
-        ListWidgetWindowItem* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
 
         lwwi->ModifiedState.LWAttributes.Alpha =
             static_cast<uint8_t>(ui->spinBoxAlpha->value());
@@ -314,7 +314,7 @@ void MainWindow::selectedActiveWindows_WriteModifiedStateToWidgets()
         ui->lwActiveWindows->selectedItems();
 
     if(selected_items.size() == 1) {
-        const auto& first_item =
+        const auto* first_item =
             dynamic_cast<ListWidgetWindowItem*>(selected_items.first());
 
         quint8 alpha = first_item->ModifiedState.LWAttributes.Alpha;
@@ -401,10 +401,11 @@ MainWindow::MainWindow(QWidget* parent)
 
     timerRemoveInvalidWindows->start(1000);
 
-    auto shrt_del_inactive =
+    const auto* shrt_del_inactive =
         new QShortcut {Qt::Key_Delete, ui->lwInactiveWindows};
 
-    auto shrt_del_active = new QShortcut {Qt::Key_Delete, ui->lwActiveWindows};
+    const auto* shrt_del_active =
+        new QShortcut {Qt::Key_Delete, ui->lwActiveWindows};
 
     connect(shrt_del_inactive,
             &QShortcut::activated,
@@ -515,14 +516,14 @@ MainWindow::MainWindow(QWidget* parent)
 MainWindow::~MainWindow()
 {
     for(qint32 i = 0; i < ui->lwInactiveWindows->count(); ++i) {
-        auto item = ui->lwInactiveWindows->item(i);
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* item = ui->lwInactiveWindows->item(i);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
         lwwi->ApplyOriginalState();
     }
 
     for(qint32 i = 0; i < ui->lwActiveWindows->count(); ++i) {
-        auto item = ui->lwActiveWindows->item(i);
-        auto lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
+        auto* item = ui->lwActiveWindows->item(i);
+        auto* lwwi = dynamic_cast<ListWidgetWindowItem*>(item);
         lwwi->ApplyOriginalState();
     }
 
